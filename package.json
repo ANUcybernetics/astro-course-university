@@ -9,19 +9,16 @@
     "course",
     "withastro"
   ],
-  "license": "MIT",
-  "author": "Ben Swift <ben.swift@anu.edu.au>",
   "homepage": "https://gitlab.anu.edu.au/u2548636/astro-theme-anu",
   "bugs": {
     "url": "https://gitlab.anu.edu.au/u2548636/astro-theme-anu/-/issues"
   },
+  "license": "MIT",
+  "author": "Ben Swift <ben.swift@anu.edu.au>",
   "repository": {
     "type": "git",
     "url": "git+https://gitlab.anu.edu.au/u2548636/astro-theme-anu.git",
     "directory": "packages/astro-course-anu"
-  },
-  "engines": {
-    "node": ">=24"
   },
   "files": [
     "CHANGELOG.md",
@@ -54,5 +51,8 @@
   },
   "peerDependencies": {
     "astro": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
