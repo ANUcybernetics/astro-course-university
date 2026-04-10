@@ -1,0 +1,46 @@
+{
+  "name": "astro-course-anu",
+  "version": "0.1.0",
+  "keywords": [
+    "anu",
+    "astro-component",
+    "astro-integration",
+    "course",
+    "withastro"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.anu.edu.au/u2548636/astro-theme-anu"
+  },
+  "files": [
+    "index.ts",
+    "course-content.ts",
+    "course-graph.ts",
+    "course-graph-integration.ts",
+    "topic-assembler.ts",
+    "schemas.ts"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./schemas": "./schemas.ts",
+    "./topic-assembler": "./topic-assembler.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "remark": "^15.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "unist-util-visit": "^5.1.0",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/mdast": "^4.0.4",
+    "vitest": "^4.1.4"
+  },
+  "peerDependencies": {
+    "astro": "^6.0.0"
+  }
+}
