@@ -36,6 +36,14 @@ Schemas subpath (`astro-course-anu/schemas`):
 - `defineCourseCollections()` — returns all three at once so a consumer's
   `content.config.ts` is a one-liner
 
+Content subpath (`astro-course-anu/content`):
+
+- `getPublishedCollection(name, filter?)` — drop-in replacement for
+  `getCollection` that filters out entries with `published: false`.
+  Accepts an optional secondary filter applied after the published
+  check. Safe on collections whose schema doesn't define `published` —
+  missing fields are treated as published.
+
 Topic assembler subpath (`astro-course-anu/topic-assembler`):
 
 - `assembleTopics(source, topicsDict)` — the underlying markdown

@@ -3,6 +3,39 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide
 history see the root `CHANGELOG.md`.
 
+## 2026-04-13
+
+### Add `getPublishedCollection` helper
+
+New `astro-course-anu/content` subpath exports
+`getPublishedCollection(name, filter?)` — a drop-in replacement for
+`getCollection` that filters out entries with `published: false`. An
+optional secondary filter is applied after the published check, so
+existing call sites can collapse from:
+
+```ts
+const topics = (await getCollection("topics")).filter(
+  (t) => t.data.published && t.data.tags.includes("admin"),
+);
+```
+
+to:
+
+```ts
+const topics = await getPublishedCollection("topics", (t) => t.data.tags.includes("admin"));
+```
+
+Motivation: the three course schemas all default `published` to `true`,
+so every `getCollection` call site in a consumer needed to remember to
+add `.filter(e => e.data.published)` to avoid leaking unpublished
+entries to public URLs. The fix in 84c0e7c added that filter to each
+`[slug].astro` in the course-benswift example, but the duplication
+across seven call sites was a signal that the filter belonged in the
+package. Now consumers get the behaviour for free.
+
+Safe to use on collections whose schema doesn't define `published` —
+missing fields are treated as published.
+
 ## 2026-04-12
 
 ### Collapse five collections to three (breaking)

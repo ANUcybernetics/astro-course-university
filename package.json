@@ -23,6 +23,7 @@
   "files": [
     "CHANGELOG.md",
     "index.ts",
+    "content-helpers.ts",
     "course-content.ts",
     "course-graph.ts",
     "course-graph-integration.ts",
@@ -32,6 +33,7 @@
   "type": "module",
   "exports": {
     ".": "./index.ts",
+    "./content": "./content-helpers.ts",
     "./schemas": "./schemas.ts",
     "./topic-assembler": "./topic-assembler.ts",
     "./package.json": "./package.json"
