@@ -3,6 +3,58 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide
 history see the root `CHANGELOG.md`.
 
+## 2026-04-12
+
+### Collapse five collections to three (breaking)
+
+The `procedures` and `admin` collections have been removed. The content
+model now has three collections, distinguished by genuinely different
+frontmatter schemas:
+
+- **topics** — general reusable content, free-form tags and `related`
+- **labs** — adds `week` (weekly-indexed exercises)
+- **assessments** — adds `week`, `due`, `weight` (graded work)
+
+Anything that used to be a procedure or an admin page is now a topic
+with a tag (`practice` for how-to guides, `admin` for policy pages).
+Consumers render tag-filtered listing pages at routes like `/admin/`
+and `/procedures/` that link back into `/topics/<slug>/`. The topic
+detail pages own the canonical URL.
+
+**Removed from the public API:**
+
+- `defineProceduresCollection` (drop the import, migrate files to topics)
+- `defineAdminCollection` (ditto)
+- `procedures` and `admin` keys on `defineCourseCollections()`
+- `"procedure"` and `"admin"` as valid `ContentNode.type` values
+- `procedures/` and `admin/` as recognised subdirectories of the
+  `courseGraph()` content scan (files in those directories are silently
+  ignored, same as any other unknown directory)
+
+**Migration:**
+
+1. move `src/content/procedures/*.md` into `src/content/topics/`, adding
+   `tags: [practice]` (or whichever tag best fits) to each file
+2. move `src/content/admin/*.md` into `src/content/topics/`, adding
+   `tags: [admin]` to each file
+3. delete `src/pages/procedures/` entirely
+4. rewrite `src/pages/admin/index.astro` to filter topics by tag:
+   ```astro
+   const admin = (await getCollection("topics"))
+     .filter((t) => t.data.published && t.data.tags.includes("admin"));
+   ```
+5. delete `src/pages/admin/[slug].astro` — topic detail pages at
+   `/topics/<slug>/` own that content now
+6. update any `related:` frontmatter entries that reference
+   `procedure/<slug>` or `admin/<slug>` to `topic/<slug>` (or a bare
+   slug if the referring file is itself a topic)
+7. update navigation links and CardGrid home pages as needed — the
+   `/admin/` route still exists as a tag-filtered listing, but
+   `/procedures/` is gone by default (consumers can add a
+   `/practice/` route or similar if they want)
+8. add `admin` (and any other structural tags) to your `src/tags.ts`
+   registry so the listing pages show a proper label
+
 ## 2026-04-11
 
 ### Extract `astro-course-anu` package

@@ -89,46 +89,6 @@ export function defineAssessmentsCollection(options: DefineCourseCollectionOptio
   });
 }
 
-/**
- * `procedures` collection — step-by-step how-to guides (submitting work,
- * setting up tools, etc.). Same shape as topics minus the references.
- */
-export function defineProceduresCollection(options: DefineCourseCollectionOptions = {}) {
-  const { base = "src/content/procedures", pattern, passthrough = true } = options;
-  return defineCollection({
-    loader: loader(base, pattern),
-    schema: maybePassthrough(
-      z.object({
-        title: z.string(),
-        summary: z.string().nullish(),
-        tags: z.array(z.string()).default([]),
-        related: z.array(z.string()).default([]),
-        published: z.coerce.boolean().default(true),
-      }),
-      passthrough,
-    ),
-  });
-}
-
-/**
- * `admin` collection — course policies and administrative information.
- * Minimal shape: just title + summary + published.
- */
-export function defineAdminCollection(options: DefineCourseCollectionOptions = {}) {
-  const { base = "src/content/admin", pattern, passthrough = true } = options;
-  return defineCollection({
-    loader: loader(base, pattern),
-    schema: maybePassthrough(
-      z.object({
-        title: z.string(),
-        summary: z.string().nullish(),
-        published: z.coerce.boolean().default(true),
-      }),
-      passthrough,
-    ),
-  });
-}
-
 export interface DefineCourseCollectionsOptions {
   /** Allow arbitrary additional frontmatter fields across all collections (default: true). */
   passthrough?: boolean;
@@ -137,7 +97,7 @@ export interface DefineCourseCollectionsOptions {
 }
 
 /**
- * Convenience helper: returns all five course collections at once so a
+ * Convenience helper: returns all three course collections at once so a
  * consumer's `content.config.ts` is a one-liner.
  *
  * ```ts
@@ -147,13 +107,18 @@ export interface DefineCourseCollectionsOptions {
  * Each collection uses its conventional base directory (`src/content/topics`,
  * etc.). If you need to customise individual collection bases, call the
  * single-collection factories directly.
+ *
+ * Only three collections exist because they have genuinely distinct schemas:
+ * topics (general reusable content), labs (week-indexed exercises), and
+ * assessments (week + due + weight). Anything else — policy pages, how-to
+ * guides, admin content — belongs in topics with a tag (e.g. `admin`,
+ * `practice`). Consumers can then render tag-filtered listing pages under
+ * routes like `/admin/` that link into `/topics/<slug>/`.
  */
 export function defineCourseCollections(options: DefineCourseCollectionsOptions = {}) {
   return {
     topics: defineTopicsCollection(options),
     labs: defineLabsCollection(options),
     assessments: defineAssessmentsCollection(options),
-    procedures: defineProceduresCollection(options),
-    admin: defineAdminCollection(options),
   };
 }

@@ -50,13 +50,12 @@ describe("readCourseNodes", () => {
         slug: "01-assignment",
         frontmatter: "title: Assignment 1\nweight: 25\nweek: 3",
       },
-      { collection: "admin", slug: "overview", frontmatter: "title: Course Overview" },
     ]);
     const nodes = await readCourseNodes(tmpDir);
-    expect(nodes).toHaveLength(4);
+    expect(nodes).toHaveLength(3);
 
     const types = nodes.map((n) => n.type).sort();
-    expect(types).toEqual(["admin", "assessment", "lab", "topic"]);
+    expect(types).toEqual(["assessment", "lab", "topic"]);
   });
 
   fsTest("preserves type-specific fields in meta", async ({ tmpDir }) => {
@@ -274,7 +273,11 @@ describe("end-to-end: read content then resolve graph", () => {
         slug: "01-a1",
         frontmatter: "title: Assignment 1\nweek: 4\nweight: 25\nrelated:\n  - topic/functions",
       },
-      { collection: "admin", slug: "overview", frontmatter: "title: Course Overview" },
+      {
+        collection: "topics",
+        slug: "overview",
+        frontmatter: "title: Course Overview\ntags:\n  - admin",
+      },
     ]);
     const nodes = await readCourseNodes(tmpDir);
     const graph = resolveGraph(nodes);
@@ -399,26 +402,25 @@ describe("writeCourseApi", () => {
     expect(graph.errors[0].type).toBe("dangling-ref");
   });
 
-  fsTest("handles procedures collection", async ({ tmpDir }) => {
+  fsTest("ignores files in unknown directories", async ({ tmpDir }) => {
     const contentDir = join(tmpDir, "content");
     const distDir = join(tmpDir, "dist");
     await mkdir(distDir, { recursive: true });
 
+    // procedures/ and admin/ are no longer recognised — content in those
+    // directories is silently skipped, not treated as a collection type.
     await writeMockCourse(contentDir, [
       { collection: "topics", slug: "git", frontmatter: "title: Git" },
-      {
-        collection: "procedures",
-        slug: "submit",
-        frontmatter: "title: Submitting\nrelated:\n  - topic/git",
-      },
+      { collection: "procedures", slug: "submit", frontmatter: "title: Submitting" },
+      { collection: "admin", slug: "policy", frontmatter: "title: Policy" },
     ]);
 
-    const { graph } = await writeCourseApi(contentDir, distDir);
+    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir);
     expect(graph.errors).toHaveLength(0);
-    expect(existsSync(join(distDir, "api", "procedure", "submit.json"))).toBe(true);
-
-    const index = JSON.parse(await readFile(join(distDir, "api", "index.json"), "utf-8"));
-    const proc = index.nodes.find((n: { id: string }) => n.id === "procedure/submit");
-    expect(proc.related).toEqual(["topic/git"]);
+    expect(graph.nodes).toHaveLength(1);
+    expect(graph.nodes[0].id).toBe("topic/git");
+    expect(filesWritten).toBe(2); // index.json + topic/git.json
+    expect(existsSync(join(distDir, "api", "procedure", "submit.json"))).toBe(false);
+    expect(existsSync(join(distDir, "api", "admin", "policy.json"))).toBe(false);
   });
 });

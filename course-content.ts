@@ -13,8 +13,6 @@ const DIR_TO_TYPE: Record<string, string> = {
   topics: "topic",
   labs: "lab",
   assessments: "assessment",
-  procedures: "procedure",
-  admin: "admin",
 };
 
 function parseNodeLocation(

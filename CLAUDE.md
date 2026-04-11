@@ -2,7 +2,7 @@
 
 A small companion package to `astro-theme-anu` that provides course-site
 authoring primitives: a typed content-graph system, reusable Zod schemas for
-the five standard course collections, a topic assembler for composing lecture
+the three standard course collections, a topic assembler for composing lecture
 decks out of reusable topic chunks, and a build-time Astro integration that
 validates the graph and emits a static JSON API.
 
@@ -18,8 +18,8 @@ Root entry (`astro-course-anu`):
   content at build time, validates the DAG, and writes `/api/index.json`
   plus `/api/<type>/<slug>.json` for each node
 - `readCourseNodes(contentDir)` — collect `ContentNode[]` from a filesystem
-  directory containing the standard `topics/`, `labs/`, `assessments/`,
-  `procedures/`, `admin/` subdirectories
+  directory containing the standard `topics/`, `labs/`, `assessments/`
+  subdirectories
 - `writeCourseApi(contentDir, distDir)` — compose `readCourseNodes` +
   `resolveGraph` + file writes for the static API
 - `resolveGraph(nodes)` — pure function that returns a `ResolvedGraph`
@@ -31,10 +31,9 @@ Root entry (`astro-course-anu`):
 Schemas subpath (`astro-course-anu/schemas`):
 
 - `defineTopicsCollection`, `defineLabsCollection`,
-  `defineAssessmentsCollection`, `defineProceduresCollection`,
-  `defineAdminCollection` — single-collection factories that wrap
+  `defineAssessmentsCollection` — single-collection factories that wrap
   `defineCollection` + `glob` + Zod schema
-- `defineCourseCollections()` — returns all five at once so a consumer's
+- `defineCourseCollections()` — returns all three at once so a consumer's
   `content.config.ts` is a one-liner
 
 Topic assembler subpath (`astro-course-anu/topic-assembler`):
@@ -48,13 +47,13 @@ Topic assembler subpath (`astro-course-anu/topic-assembler`):
 
 ## Content graph model
 
-Every content file that lives in one of the five standard directories
+Every content file that lives in one of the three standard directories
 contributes a `ContentNode`:
 
 ```ts
 interface ContentNode {
   id: string; // "topic/variables"
-  type: string; // "topic" | "lab" | "assessment" | "procedure" | "admin"
+  type: string; // "topic" | "lab" | "assessment"
   slug: string; // "variables"
   title: string;
   description?: string;
@@ -70,6 +69,14 @@ Bare slugs resolve to the same collection type (`related: [variables]` in
 a topic resolves to `topic/variables`); use `type/slug` for cross-type
 references (`related: [topic/functions]` in a lab). The build fails on
 dangling references or self-references.
+
+The collection set is intentionally small. Only things with genuinely
+distinct frontmatter schemas get their own collection: labs need `week`,
+assessments need `week` + `due` + `weight`, topics are everything else.
+Policy pages, how-to guides, admin content, and any other "informational"
+material belongs in topics with a tag (e.g. `admin`, `practice`) —
+consumers then render tag-filtered listing pages at routes like `/admin/`
+that link back into `/topics/<slug>/`.
 
 ## Typical consumer setup
 

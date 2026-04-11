@@ -3,11 +3,11 @@
 Companion package to
 [`astro-theme-anu`](../astro-theme-anu) for course-site authoring.
 
-Provides a typed content-graph model (topics, labs, assessments,
-procedures, admin), reusable Zod schemas for the five standard course
-collections, a topic assembler for composing lecture decks out of
-reusable chunks, and a build-time Astro integration that validates the
-graph and emits a static JSON API.
+Provides a typed content-graph model (topics, labs, assessments),
+reusable Zod schemas for the three standard course collections, a topic
+assembler for composing lecture decks out of reusable chunks, and a
+build-time Astro integration that validates the graph and emits a static
+JSON API.
 
 The package is theme-agnostic — it handles data and validation, while
 `astro-theme-anu` handles visual presentation. Consumers of a course
@@ -41,10 +41,9 @@ export const collections = defineCourseCollections();
 ```
 
 At build time, `courseGraph()` walks `src/content/{topics,labs,
-assessments,procedures,admin}`, validates the `related` edges (undirected
-thematic links with cross-type references via `type/slug` syntax), and
-emits a static JSON API at `/api/index.json` + `/api/<type>/<slug>.json`
-for each node.
+assessments}`, validates the `related` edges (undirected thematic links
+with cross-type references via `type/slug` syntax), and emits a static
+JSON API at `/api/index.json` + `/api/<type>/<slug>.json` for each node.
 
 ## Entry points
 
