@@ -3,6 +3,41 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide
 history see the root `CHANGELOG.md`.
 
+## 2026-04-15
+
+### Add `news` and `people` collections
+
+Two new schema factories in `astro-course-anu/schemas`:
+
+- **`defineNewsCollection`** — dated announcements and guest-lecture
+  posts. Required fields: `title`, `date` (coerced), and `author`
+  (a `reference("people")`). Optional: `summary`, `tags`, `pinned`,
+  `published`. Intentionally kept out of the content graph: news is
+  ephemeral and chronological, not a reusable pedagogical unit.
+  Cross-references from news to other content are plain markdown links.
+- **`definePeopleCollection`** — the cast of the course: convenor, TAs,
+  guest lecturers, and anyone else who gets a byline. `title` is the
+  required display name; `affiliation`, `role`
+  (`convenor`/`ta`/`guest`/`other`), `email`, `url`, and `photo` (via
+  Astro's `image()`) are optional. The markdown body is an optional
+  bio. Referenced by `news.author`.
+
+`defineCourseCollections()` now returns all five collections
+(`topics`, `labs`, `assessments`, `news`, `people`). If a consumer
+doesn't create a matching directory under `src/content/`, Astro's
+glob loader simply matches nothing and the collection is empty — so
+this is a safe drop-in for existing consumers.
+
+**Reference validation caveat.** Astro's `reference("people")`
+validates at build time by emitting a warning (not an error) when a
+reference resolves to no entry — builds still succeed, and `getEntry`
+returns `undefined` for the dangling reference. Consumer byline code
+should fall back gracefully when `author` can't be resolved (the
+course-benswift example does this at
+`src/pages/news/[slug].astro`). A missing required `author` field
+(as opposed to a bad reference) does fail the build via Zod
+validation.
+
 ## 2026-04-13
 
 ### Add `getPublishedCollection` helper

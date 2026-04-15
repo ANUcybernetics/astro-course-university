@@ -1,10 +1,10 @@
 # astro-course-anu
 
 A small companion package to `astro-theme-anu` that provides course-site
-authoring primitives: a typed content-graph system, reusable Zod schemas for
-the three standard course collections, a topic assembler for composing lecture
-decks out of reusable topic chunks, and a build-time Astro integration that
-validates the graph and emits a static JSON API.
+authoring primitives: a typed content-graph system, reusable Zod schemas
+for the five standard course collections, a topic assembler for composing
+lecture decks out of reusable topic chunks, and a build-time Astro
+integration that validates the graph and emits a static JSON API.
 
 The package is theme-agnostic — it handles data and validation, the theme
 handles visual presentation. Consumers of a course site typically install
@@ -31,9 +31,10 @@ Root entry (`astro-course-anu`):
 Schemas subpath (`astro-course-anu/schemas`):
 
 - `defineTopicsCollection`, `defineLabsCollection`,
-  `defineAssessmentsCollection` — single-collection factories that wrap
+  `defineAssessmentsCollection`, `defineNewsCollection`,
+  `definePeopleCollection` — single-collection factories that wrap
   `defineCollection` + `glob` + Zod schema
-- `defineCourseCollections()` — returns all three at once so a consumer's
+- `defineCourseCollections()` — returns all five at once so a consumer's
   `content.config.ts` is a one-liner
 
 Content subpath (`astro-course-anu/content`):
@@ -86,6 +87,35 @@ material belongs in topics with a tag (e.g. `admin`, `practice`) —
 consumers then render tag-filtered listing pages at routes like `/admin/`
 that link back into `/topics/<slug>/`.
 
+## News and people (non-graph collections)
+
+Two further collections sit alongside the three graph collections but
+are deliberately kept out of the content graph:
+
+- **news** — dated announcements and guest-lecture posts. Required
+  fields: `title`, `date` (coerced), `author` (a
+  `reference("people")`). Optional: `summary`, `tags`, `pinned`,
+  `published`. News is ephemeral and chronological, not a reusable
+  pedagogical unit — cross-references from news to other content
+  are plain markdown links, not graph edges.
+- **people** — the cast of the course: convenor, TAs, guest lecturers.
+  `title` is the required display name; `affiliation`, `role`
+  (`convenor`/`ta`/`guest`/`other`), `email`, `url`, and `photo`
+  (via Astro's `image()`) are optional. The markdown body is an
+  optional bio.
+
+Neither collection contributes `ContentNode`s to the graph and
+neither has a `related:` field. The `news.author` reference is a
+**typed foreign key** (validated by Astro's `reference()`), not a
+`related:` edge.
+
+**Reference validation caveat.** Astro's `reference()` emits a
+build-time _warning_ when a reference resolves to no entry — the
+build still succeeds and `getEntry()` returns `undefined`. Consumer
+byline code must handle undefined author gracefully (fall back to
+no link). A missing required `author` field, by contrast, fails the
+build via Zod validation.
+
 ## Typical consumer setup
 
 ```ts
@@ -122,5 +152,19 @@ Unit tests live next to the sources:
 - `course-content.test.ts` — filesystem reader + end-to-end graph +
   API writer
 - `topic-assembler.test.ts` — topic directive parsing + assembly
+- `schemas.test.ts` — all five Zod schemas exercised directly
+  (valid frontmatter, defaults, required-field rejection,
+  role/email/url validation, passthrough behaviour). Uses a
+  `vi.mock` shim for `astro:content` and `astro/loaders` so the
+  schema factories can be invoked without an Astro build.
 
-Run with `pnpm --filter astro-course-anu test`.
+Cross-package integration tests live in `tests/` at the repo root:
+
+- `tests/examples.test.ts` — builds each example end-to-end
+- `tests/course-references.test.ts` — reference-validation
+  integration: a dangling `news.author` surfaces Astro's warning,
+  and a missing `author:` field fails the build
+
+Run with `pnpm --filter astro-course-anu test` for package tests, or
+`pnpm test` / `pnpm test:examples` from the repo root for the full
+suite.
