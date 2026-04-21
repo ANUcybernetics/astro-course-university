@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.5"
   },
   "peerDependencies": {
     "astro": "^6.0.0"
