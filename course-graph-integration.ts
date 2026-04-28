@@ -2,8 +2,21 @@ import type { AstroIntegration } from "astro";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeCourseApi } from "./course-content.js";
+import type { CourseCollection } from "./course-content.js";
 
-export default function courseGraph(): AstroIntegration {
+export interface CourseGraphOptions {
+  /**
+   * Collections that participate in the content graph. Each entry maps
+   * an Astro collection `key` (used by `getPublishedCollection(key)`) to
+   * the on-disk `dir` under `src/content/` and the singular graph node
+   * `type` (which becomes the `/api/<type>/<slug>.json` segment and the
+   * cross-type prefix in `related: ["<type>/<slug>"]` edges).
+   */
+  collections: CourseCollection[];
+}
+
+export default function courseGraph(options: CourseGraphOptions): AstroIntegration {
+  const { collections } = options;
   let srcDir: string;
 
   return {
@@ -22,7 +35,7 @@ export default function courseGraph(): AstroIntegration {
         }
 
         const contentDir = join(srcDir, "content");
-        const { graph, filesWritten } = await writeCourseApi(contentDir, distPath);
+        const { graph, filesWritten } = await writeCourseApi(contentDir, distPath, collections);
         const errorCount = graph.errors.length;
         if (errorCount > 0) {
           const lines = graph.errors.slice(0, 20).map((e) => `  ${e.type}: ${e.detail}`);

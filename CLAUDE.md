@@ -1,8 +1,8 @@
 # astro-course-anu
 
 A small companion package to `astro-theme-anu` that provides course-site
-authoring primitives: a typed content-graph system, reusable Zod schemas
-for the five standard course collections, a topic assembler for composing
+authoring primitives: a typed content-graph layer, reusable Zod schemas
+for the `news` and `people` collections, a topic assembler for composing
 lecture decks out of reusable topic chunks, and a build-time Astro
 integration that validates the graph and emits a static JSON API.
 
@@ -14,14 +14,16 @@ both packages.
 
 Root entry (`astro-course-anu`):
 
-- default export / `courseGraph()` — Astro integration that reads course
-  content at build time, validates the DAG, and writes `/api/index.json`
-  plus `/api/<type>/<slug>.json` for each node
-- `readCourseNodes(contentDir)` — collect `ContentNode[]` from a filesystem
-  directory containing the standard `topics/`, `labs/`, `assessments/`
-  subdirectories
-- `writeCourseApi(contentDir, distDir)` — compose `readCourseNodes` +
-  `resolveGraph` + file writes for the static API
+- default export / `courseGraph({ collections })` — Astro integration that
+  reads course content at build time, validates the DAG, and writes
+  `/api/index.json` plus `/api/<type>/<slug>.json` for each node. The
+  required `collections` option is a list of `{ key, dir, type }`
+  entries naming each graph-participating collection.
+- `readCourseNodes(contentDir, collections)` — collect `ContentNode[]`
+  from the configured directories under `contentDir`. Each node's `type`
+  is taken from the matching collection entry.
+- `writeCourseApi(contentDir, distDir, collections)` — compose
+  `readCourseNodes` + `resolveGraph` + file writes for the static API
 - `resolveGraph(nodes)` — pure function that returns a `ResolvedGraph`
   (nodes, edges, validation errors)
 - `resolveEdgeTarget(fromType, ref)` — convert a bare slug like
@@ -30,12 +32,13 @@ Root entry (`astro-course-anu`):
 
 Schemas subpath (`astro-course-anu/schemas`):
 
-- `defineTopicsCollection`, `defineLabsCollection`,
-  `defineAssessmentsCollection`, `defineNewsCollection`,
-  `definePeopleCollection` — single-collection factories that wrap
-  `defineCollection` + `glob` + Zod schema
-- `defineCourseCollections()` — returns all five at once so a consumer's
-  `content.config.ts` is a one-liner
+- `courseNodeSchema` — bare Zod object covering the graph-participating
+  fields (`title`, `summary`, `tags`, `related`, `published`).
+  Consumers compose collections by `extend`ing this with type-specific
+  fields and passing the result to `defineCollection` themselves.
+- `defineNewsCollection`, `definePeopleCollection` — the two collections
+  that genuinely need package-level wiring (`reference("people")` and
+  `image()` respectively), so they stay as factories.
 
 Content subpath (`astro-course-anu/content`):
 
@@ -56,14 +59,14 @@ Topic assembler subpath (`astro-course-anu/topic-assembler`):
 
 ## Content graph model
 
-Every content file that lives in one of the three standard directories
-contributes a `ContentNode`:
+Every content file under a configured collection directory contributes
+a `ContentNode`:
 
 ```ts
 interface ContentNode {
-  id: string; // "topic/variables"
-  type: string; // "topic" | "lab" | "assessment"
-  slug: string; // "variables"
+  id: string; // "<type>/<slug>", e.g. "topic/variables"
+  type: string; // whatever singular type the consumer configured
+  slug: string;
   title: string;
   description?: string;
   tags: string[];
@@ -76,21 +79,18 @@ interface ContentNode {
 Edges are defined through an undirected `related` field in frontmatter.
 Bare slugs resolve to the same collection type (`related: [variables]` in
 a topic resolves to `topic/variables`); use `type/slug` for cross-type
-references (`related: [topic/functions]` in a lab). The build fails on
-dangling references or self-references.
+references (`related: [topic/functions]` in a `crit`). The build fails
+on dangling references or self-references.
 
-The collection set is intentionally small. Only things with genuinely
-distinct frontmatter schemas get their own collection: labs need `week`,
-assessments need `week` + `due` + `weight`, topics are everything else.
-Policy pages, how-to guides, admin content, and any other "informational"
-material belongs in topics with a tag (e.g. `admin`, `practice`) —
-consumers then render tag-filtered listing pages at routes like `/admin/`
-that link back into `/topics/<slug>/`.
+The package no longer hardcodes a vocabulary. Consumers pick the
+collection keys, directories, and singular type names that fit their
+course — the historical `topics` / `labs` / `assessments` shape is one
+configuration among many.
 
 ## News and people (non-graph collections)
 
-Two further collections sit alongside the three graph collections but
-are deliberately kept out of the content graph:
+Two further collections sit alongside the graph collections but are
+deliberately kept out of the content graph:
 
 - **news** — dated announcements and guest-lecture posts. Required
   fields: `title`, `date` (coerced), `author` (a
@@ -125,14 +125,57 @@ import anuTheme from "astro-theme-anu";
 import courseGraph from "astro-course-anu";
 
 export default defineConfig({
-  integrations: [anuTheme(), courseGraph()],
+  integrations: [
+    anuTheme(),
+    courseGraph({
+      collections: [
+        { key: "topics", dir: "topics", type: "topic" },
+        { key: "labs", dir: "labs", type: "lab" },
+        { key: "assessments", dir: "assessments", type: "assessment" },
+      ],
+    }),
+  ],
 });
 ```
 
 ```ts
 // src/content.config.ts
-import { defineCourseCollections } from "astro-course-anu/schemas";
-export const collections = defineCourseCollections();
+import { defineCollection } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
+import {
+  courseNodeSchema,
+  defineNewsCollection,
+  definePeopleCollection,
+} from "astro-course-anu/schemas";
+
+const loader = (dir: string) =>
+  glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
+
+export const collections = {
+  topics: defineCollection({
+    loader: loader("topics"),
+    schema: courseNodeSchema.passthrough(),
+  }),
+  labs: defineCollection({
+    loader: loader("labs"),
+    schema: courseNodeSchema
+      .extend({ week: z.coerce.number().int().min(1).max(13) })
+      .passthrough(),
+  }),
+  assessments: defineCollection({
+    loader: loader("assessments"),
+    schema: courseNodeSchema
+      .extend({
+        week: z.coerce.number().int().min(1).max(13),
+        due: z.coerce.date().nullish(),
+        weight: z.coerce.number().nullish(),
+      })
+      .passthrough(),
+  }),
+  news: defineNewsCollection(),
+  people: definePeopleCollection(),
+};
 ```
 
 ```js
@@ -150,13 +193,14 @@ Unit tests live next to the sources:
 - `course-graph.test.ts` — pure graph resolution (bare slugs, cross-type
   references, dangling/self-ref detection)
 - `course-content.test.ts` — filesystem reader + end-to-end graph +
-  API writer
+  API writer, exercised against an explicit collections config
 - `topic-assembler.test.ts` — topic directive parsing + assembly
-- `schemas.test.ts` — all five Zod schemas exercised directly
-  (valid frontmatter, defaults, required-field rejection,
-  role/email/url validation, passthrough behaviour). Uses a
-  `vi.mock` shim for `astro:content` and `astro/loaders` so the
-  schema factories can be invoked without an Astro build.
+- `schemas.test.ts` — `courseNodeSchema` plus the `news` and `people`
+  factories exercised directly (valid frontmatter, defaults,
+  required-field rejection, role/email/url validation, passthrough
+  behaviour). Uses a `vi.mock` shim for `astro:content` and
+  `astro/loaders` so the schema factories can be invoked without an
+  Astro build.
 
 Cross-package integration tests live in `tests/` at the repo root:
 

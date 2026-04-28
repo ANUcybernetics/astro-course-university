@@ -11,14 +11,7 @@ vi.mock("astro/loaders", () => ({
 }));
 
 // Imports must come after vi.mock — vitest hoists mocks so this works.
-import {
-  defineAssessmentsCollection,
-  defineCourseCollections,
-  defineLabsCollection,
-  defineNewsCollection,
-  definePeopleCollection,
-  defineTopicsCollection,
-} from "./schemas.js";
+import { courseNodeSchema, defineNewsCollection, definePeopleCollection } from "./schemas.js";
 
 type CollectionLike = { schema: unknown };
 
@@ -31,6 +24,75 @@ function resolveSchema(
     ? (s as (c: typeof ctx) => z.ZodTypeAny)(ctx)
     : (s as z.ZodTypeAny);
 }
+
+describe("courseNodeSchema", () => {
+  test("parses a minimal node (title only)", () => {
+    const parsed = courseNodeSchema.parse({ title: "Variables" });
+    expect(parsed).toMatchObject({
+      title: "Variables",
+      tags: [],
+      related: [],
+      published: true,
+    });
+  });
+
+  test("parses a fully-populated node", () => {
+    const parsed = courseNodeSchema.parse({
+      title: "Functions",
+      summary: "Reusable units of behaviour",
+      tags: ["concept", "fundamentals"],
+      related: ["variables", "scope"],
+      published: false,
+    });
+    expect(parsed).toMatchObject({
+      title: "Functions",
+      summary: "Reusable units of behaviour",
+      tags: ["concept", "fundamentals"],
+      related: ["variables", "scope"],
+      published: false,
+    });
+  });
+
+  test("rejects missing title", () => {
+    expect(() => courseNodeSchema.parse({})).toThrow();
+  });
+
+  test("rejects non-string title", () => {
+    expect(() => courseNodeSchema.parse({ title: 42 })).toThrow();
+  });
+
+  test("respects explicit published: false", () => {
+    const parsed = courseNodeSchema.parse({ title: "x", published: false });
+    expect(parsed.published).toBe(false);
+  });
+
+  test("does not include week/repo/due/weight (consumer-defined)", () => {
+    // courseNodeSchema is the bare graph shape — type-specific fields like
+    // week or weight live on the consumer's extended schema. The bare
+    // schema strips unknown fields when parsed strictly.
+    const strict = courseNodeSchema.strict();
+    expect(() => strict.parse({ title: "x", week: 1 })).toThrow();
+  });
+
+  test("extends cleanly with type-specific fields", () => {
+    const critsSchema = courseNodeSchema.extend({
+      week: z.number().int().min(1).max(13),
+      repo: z.string().url().nullish(),
+    });
+    const parsed = critsSchema.parse({
+      title: "Prototype 1 crit",
+      week: 4,
+      repo: "https://github.com/example/repo",
+    });
+    expect(parsed).toMatchObject({
+      title: "Prototype 1 crit",
+      week: 4,
+      repo: "https://github.com/example/repo",
+      tags: [],
+      published: true,
+    });
+  });
+});
 
 describe("defineNewsCollection", () => {
   const schema = resolveSchema(defineNewsCollection());
@@ -57,7 +119,7 @@ describe("defineNewsCollection", () => {
 
   test("applies defaults for tags, pinned, published", () => {
     const parsed = schema.parse({
-      title: "Week 5 lab released",
+      title: "Week 5 crit released",
       date: "2026-04-01",
       author: "jane-doe",
     });
@@ -171,30 +233,5 @@ describe("definePeopleCollection", () => {
   test("passthrough preserves unknown fields", () => {
     const parsed = schema.parse({ title: "x", twitter: "@someone" });
     expect((parsed as { twitter: unknown }).twitter).toBe("@someone");
-  });
-});
-
-describe("defineCourseCollections", () => {
-  test("returns all five collections", () => {
-    const c = defineCourseCollections();
-    expect(Object.keys(c).sort()).toEqual(["assessments", "labs", "news", "people", "topics"]);
-  });
-
-  test("each collection has a schema and loader", () => {
-    const c = defineCourseCollections();
-    for (const key of ["topics", "labs", "assessments", "news", "people"] as const) {
-      const col = c[key] as { schema?: unknown; loader?: unknown };
-      expect(col.schema).toBeDefined();
-      expect(col.loader).toBeDefined();
-    }
-  });
-
-  test("single-collection factories produce equivalent shape", () => {
-    const topics = defineTopicsCollection();
-    const labs = defineLabsCollection();
-    const assessments = defineAssessmentsCollection();
-    expect((topics as CollectionLike).schema).toBeDefined();
-    expect((labs as CollectionLike).schema).toBeDefined();
-    expect((assessments as CollectionLike).schema).toBeDefined();
   });
 });

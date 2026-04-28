@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { readCourseNodes, writeCourseApi } from "./course-content.js";
+import type { CourseCollection } from "./course-content.js";
 import { resolveGraph } from "./course-graph.js";
 import { fsTest } from "./test-utils.js";
 
@@ -21,6 +22,14 @@ async function writeMockCourse(tmpDir: string, nodes: MockNode[]): Promise<void>
   }
 }
 
+// Standard collections config used across most tests, mirroring the
+// classic three-collection course shape (topics, labs, assessments).
+const DEFAULT_COLLECTIONS: CourseCollection[] = [
+  { key: "topics", dir: "topics", type: "topic" },
+  { key: "labs", dir: "labs", type: "lab" },
+  { key: "assessments", dir: "assessments", type: "assessment" },
+];
+
 describe("readCourseNodes", () => {
   fsTest("reads a single topic", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
@@ -30,7 +39,7 @@ describe("readCourseNodes", () => {
         frontmatter: "title: Variables\nsummary: Declaring variables",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(1);
     expect(nodes[0]).toMatchObject({
       id: "topic/variables",
@@ -51,7 +60,7 @@ describe("readCourseNodes", () => {
         frontmatter: "title: Assignment 1\nweight: 25\nweek: 3",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(3);
 
     const types = nodes.map((n) => n.type).sort();
@@ -66,7 +75,7 @@ describe("readCourseNodes", () => {
         frontmatter: "title: A1\nweight: 25\nweek: 3\ndue: 2025-03-28",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes[0].meta).toMatchObject({ weight: 25, week: 3 });
   });
 
@@ -79,7 +88,7 @@ describe("readCourseNodes", () => {
       },
       { collection: "topics", slug: "testing", frontmatter: "title: Testing" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     const dbg = nodes.find((n) => n.slug === "debugging")!;
     expect(dbg.related).toEqual(["topic/testing"]);
   });
@@ -93,7 +102,7 @@ describe("readCourseNodes", () => {
       },
       { collection: "topics", slug: "variables", frontmatter: "title: Variables" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     const lab = nodes.find((n) => n.type === "lab")!;
     expect(lab.related).toEqual(["topic/variables"]);
   });
@@ -103,7 +112,7 @@ describe("readCourseNodes", () => {
       { collection: "topics", slug: "a", frontmatter: "title: A\nrelated: b" },
       { collection: "topics", slug: "b", frontmatter: "title: B" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     const a = nodes.find((n) => n.slug === "a")!;
     expect(a.related).toEqual(["topic/b"]);
   });
@@ -116,7 +125,7 @@ describe("readCourseNodes", () => {
         frontmatter: "title: Git\ntags:\n  - practice\n  - tools",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes[0].tags).toEqual(["practice", "tools"]);
   });
 
@@ -125,7 +134,7 @@ describe("readCourseNodes", () => {
       { collection: "topics", slug: "draft", frontmatter: "title: Draft\npublished: false" },
       { collection: "topics", slug: "live", frontmatter: "title: Live" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(1);
     expect(nodes[0].title).toBe("Live");
   });
@@ -134,7 +143,7 @@ describe("readCourseNodes", () => {
     await writeMockCourse(tmpDir, [
       { collection: "topics", slug: "notitle", frontmatter: "summary: No title here" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(0);
   });
 
@@ -142,15 +151,15 @@ describe("readCourseNodes", () => {
     const dir = join(tmpDir, "topics");
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "bare.md"), "# Just content\n\nNo frontmatter.\n");
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(0);
   });
 
-  fsTest("skips files outside known collection directories", async ({ tmpDir }) => {
+  fsTest("skips files outside configured collection directories", async ({ tmpDir }) => {
     await mkdir(join(tmpDir, "unknown"), { recursive: true });
     await writeFile(join(tmpDir, "unknown", "page.md"), "---\ntitle: Page\n---\n\nContent.\n");
     await writeFile(join(tmpDir, "root.md"), "---\ntitle: Root\n---\n\nContent.\n");
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(0);
   });
 
@@ -162,7 +171,7 @@ describe("readCourseNodes", () => {
         frontmatter: "title: Both\ndescription: The description\nsummary: The summary",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes[0].description).toBe("The description");
   });
 
@@ -170,7 +179,7 @@ describe("readCourseNodes", () => {
     await writeMockCourse(tmpDir, [
       { collection: "topics", slug: "sum", frontmatter: "title: Sum\nsummary: A summary" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes[0].description).toBe("A summary");
   });
 
@@ -180,7 +189,7 @@ describe("readCourseNodes", () => {
       await writeMockCourse(tmpDir, [
         { collection: "topics", slug: "bare", frontmatter: "title: Bare" },
       ]);
-      const nodes = await readCourseNodes(tmpDir);
+      const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
       expect(nodes[0].description).toBeUndefined();
     },
   );
@@ -194,13 +203,13 @@ describe("readCourseNodes", () => {
         body: "# Heading\n\nParagraph.",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes[0].body).toContain("# Heading");
     expect(nodes[0].body).toContain("Paragraph.");
   });
 
   fsTest("returns empty array for empty directory", async ({ tmpDir }) => {
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toEqual([]);
   });
 
@@ -211,9 +220,34 @@ describe("readCourseNodes", () => {
       join(dir, "component.mdx"),
       '---\ntitle: Component\n---\n\nimport Card from "./Card.astro";\n\n# Hello\n',
     );
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(1);
     expect(nodes[0].id).toBe("topic/component");
+  });
+
+  fsTest("renaming a directory in config changes the resulting type", async ({ tmpDir }) => {
+    // Demonstrates that vocabulary is no longer hardcoded — the same
+    // on-disk file becomes whatever `type` the consumer asks for.
+    await writeMockCourse(tmpDir, [
+      { collection: "crits", slug: "01-prototype", frontmatter: "title: Prototype 1\nweek: 4" },
+    ]);
+    const nodes = await readCourseNodes(tmpDir, [
+      { key: "crits", dir: "crits", type: "crit" },
+    ]);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]).toMatchObject({ id: "crit/01-prototype", type: "crit", slug: "01-prototype" });
+  });
+
+  fsTest("ignores collections whose dir does not exist", async ({ tmpDir }) => {
+    await writeMockCourse(tmpDir, [
+      { collection: "topics", slug: "x", frontmatter: "title: X" },
+    ]);
+    const nodes = await readCourseNodes(tmpDir, [
+      { key: "topics", dir: "topics", type: "topic" },
+      { key: "missing", dir: "does-not-exist", type: "missing" },
+    ]);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].type).toBe("topic");
   });
 });
 
@@ -226,7 +260,7 @@ describe("end-to-end: read content then resolve graph", () => {
         frontmatter: "title: Functions\nrelated:\n  - nonexistent",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     const graph = resolveGraph(nodes);
     expect(graph.errors).toHaveLength(1);
     expect(graph.errors[0]).toMatchObject({
@@ -240,7 +274,7 @@ describe("end-to-end: read content then resolve graph", () => {
       { collection: "topics", slug: "loops", frontmatter: "title: Loops\nrelated:\n  - variables" },
       { collection: "topics", slug: "variables", frontmatter: "title: Variables" },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     const graph = resolveGraph(nodes);
     expect(graph.errors).toHaveLength(0);
     expect(graph.edges).toEqual([{ from: "topic/loops", to: "topic/variables" }]);
@@ -279,7 +313,7 @@ describe("end-to-end: read content then resolve graph", () => {
         frontmatter: "title: Course Overview\ntags:\n  - admin",
       },
     ]);
-    const nodes = await readCourseNodes(tmpDir);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     const graph = resolveGraph(nodes);
 
     expect(graph.errors).toHaveLength(0);
@@ -315,7 +349,7 @@ describe("writeCourseApi", () => {
       },
     ]);
 
-    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir);
+    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir, DEFAULT_COLLECTIONS);
     expect(graph.errors).toHaveLength(0);
     expect(filesWritten).toBe(4);
 
@@ -335,7 +369,7 @@ describe("writeCourseApi", () => {
       { collection: "topics", slug: "b", frontmatter: "title: B\nrelated:\n  - a" },
     ]);
 
-    await writeCourseApi(contentDir, distDir);
+    await writeCourseApi(contentDir, distDir, DEFAULT_COLLECTIONS);
     const index = JSON.parse(await readFile(join(distDir, "api", "index.json"), "utf-8"));
 
     expect(index.nodes).toHaveLength(2);
@@ -359,7 +393,7 @@ describe("writeCourseApi", () => {
       },
     ]);
 
-    await writeCourseApi(contentDir, distDir);
+    await writeCourseApi(contentDir, distDir, DEFAULT_COLLECTIONS);
     const baseJson = JSON.parse(
       await readFile(join(distDir, "api", "topic", "base.json"), "utf-8"),
     );
@@ -374,7 +408,7 @@ describe("writeCourseApi", () => {
     await mkdir(contentDir, { recursive: true });
     await mkdir(distDir, { recursive: true });
 
-    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir);
+    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir, DEFAULT_COLLECTIONS);
     expect(graph.nodes).toHaveLength(0);
     expect(graph.edges).toHaveLength(0);
     expect(filesWritten).toBe(1);
@@ -397,30 +431,46 @@ describe("writeCourseApi", () => {
       },
     ]);
 
-    const { graph } = await writeCourseApi(contentDir, distDir);
+    const { graph } = await writeCourseApi(contentDir, distDir, DEFAULT_COLLECTIONS);
     expect(graph.errors).toHaveLength(1);
     expect(graph.errors[0].type).toBe("dangling-ref");
   });
 
-  fsTest("ignores files in unknown directories", async ({ tmpDir }) => {
+  fsTest("ignores files in unconfigured directories", async ({ tmpDir }) => {
     const contentDir = join(tmpDir, "content");
     const distDir = join(tmpDir, "dist");
     await mkdir(distDir, { recursive: true });
 
-    // procedures/ and admin/ are no longer recognised — content in those
-    // directories is silently skipped, not treated as a collection type.
+    // procedures/ and admin/ aren't in DEFAULT_COLLECTIONS — content in
+    // those directories is silently skipped, not treated as a collection.
     await writeMockCourse(contentDir, [
       { collection: "topics", slug: "git", frontmatter: "title: Git" },
       { collection: "procedures", slug: "submit", frontmatter: "title: Submitting" },
       { collection: "admin", slug: "policy", frontmatter: "title: Policy" },
     ]);
 
-    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir);
+    const { graph, filesWritten } = await writeCourseApi(contentDir, distDir, DEFAULT_COLLECTIONS);
     expect(graph.errors).toHaveLength(0);
     expect(graph.nodes).toHaveLength(1);
     expect(graph.nodes[0].id).toBe("topic/git");
     expect(filesWritten).toBe(2); // index.json + topic/git.json
     expect(existsSync(join(distDir, "api", "procedure", "submit.json"))).toBe(false);
     expect(existsSync(join(distDir, "api", "admin", "policy.json"))).toBe(false);
+  });
+
+  fsTest("uses consumer-provided type names in JSON paths", async ({ tmpDir }) => {
+    const contentDir = join(tmpDir, "content");
+    const distDir = join(tmpDir, "dist");
+    await mkdir(distDir, { recursive: true });
+
+    await writeMockCourse(contentDir, [
+      { collection: "crits", slug: "01-prototype", frontmatter: "title: Prototype 1\nweek: 4" },
+    ]);
+
+    const { graph } = await writeCourseApi(contentDir, distDir, [
+      { key: "crits", dir: "crits", type: "crit" },
+    ]);
+    expect(graph.errors).toHaveLength(0);
+    expect(existsSync(join(distDir, "api", "crit", "01-prototype.json"))).toBe(true);
   });
 });

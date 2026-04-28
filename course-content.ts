@@ -9,21 +9,30 @@ import {
 } from "./course-graph.js";
 import type { ContentNode, ResolvedGraph } from "./course-graph.js";
 
-const DIR_TO_TYPE: Record<string, string> = {
-  topics: "topic",
-  labs: "lab",
-  assessments: "assessment",
-};
+/**
+ * Configuration for a single graph-participating collection. `key` is the
+ * Astro collection name (used by consumers via `getPublishedCollection`),
+ * `dir` is the directory under `src/content/` to walk, and `type` is the
+ * singular graph node type (becomes the `/api/<type>/<slug>.json`
+ * segment and the cross-type prefix for `related: ["<type>/<slug>"]`
+ * edges).
+ */
+export interface CourseCollection {
+  key: string;
+  dir: string;
+  type: string;
+}
 
 function parseNodeLocation(
   filePath: string,
   contentDir: string,
+  dirToType: Map<string, string>,
 ): { type: string; slug: string } | null {
   const rel = relative(contentDir, filePath);
   const parts = rel.split("/");
   if (parts.length < 2) return null;
 
-  const type = DIR_TO_TYPE[parts[0]];
+  const type = dirToType.get(parts[0]);
   if (!type) return null;
 
   const slug = basename(parts[parts.length - 1], extname(parts[parts.length - 1]));
@@ -60,58 +69,66 @@ function toStringArray(val: unknown): string[] {
   return [];
 }
 
-export async function readCourseNodes(contentDir: string): Promise<ContentNode[]> {
-  const files = await collectMarkdownFiles(contentDir);
+export async function readCourseNodes(
+  contentDir: string,
+  collections: CourseCollection[],
+): Promise<ContentNode[]> {
+  const dirToType = new Map(collections.map((c) => [c.dir, c.type]));
   const nodes: ContentNode[] = [];
 
-  for (const filePath of files) {
-    const location = parseNodeLocation(filePath, contentDir);
-    if (!location) continue;
+  for (const collection of collections) {
+    const collectionDir = join(contentDir, collection.dir);
+    const files = await collectMarkdownFiles(collectionDir);
 
-    const source = await readFile(filePath, "utf-8");
-    const fmMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-    if (!fmMatch) continue;
+    for (const filePath of files) {
+      const location = parseNodeLocation(filePath, contentDir, dirToType);
+      if (!location) continue;
 
-    const raw = parseYaml(fmMatch[1]);
-    if (typeof raw !== "object" || raw === null) continue;
+      const source = await readFile(filePath, "utf-8");
+      const fmMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+      if (!fmMatch) continue;
 
-    const fm = raw as Record<string, unknown>;
-    if (fm.published === false) continue;
+      const raw = parseYaml(fmMatch[1]);
+      if (typeof raw !== "object" || raw === null) continue;
 
-    const title = fm.title;
-    if (typeof title !== "string") continue;
+      const fm = raw as Record<string, unknown>;
+      if (fm.published === false) continue;
 
-    const { type, slug } = location;
-    const id = `${type}/${slug}`;
+      const title = fm.title;
+      if (typeof title !== "string") continue;
 
-    const rawRelated = toStringArray(fm.related);
+      const { type, slug } = location;
+      const id = `${type}/${slug}`;
 
-    const {
-      title: _t,
-      summary: _s,
-      description: _d,
-      tags: _tags,
-      related: _rel,
-      published: _p,
-      ...rest
-    } = fm;
+      const rawRelated = toStringArray(fm.related);
 
-    nodes.push({
-      id,
-      type,
-      slug,
-      title,
-      description:
-        typeof fm.description === "string"
-          ? fm.description
-          : typeof fm.summary === "string"
-            ? fm.summary
-            : undefined,
-      tags: toStringArray(fm.tags),
-      related: rawRelated.map((r) => resolveEdgeTarget(type, r)),
-      meta: rest,
-      body: fmMatch[2].trim(),
-    });
+      const {
+        title: _t,
+        summary: _s,
+        description: _d,
+        tags: _tags,
+        related: _rel,
+        published: _p,
+        ...rest
+      } = fm;
+
+      nodes.push({
+        id,
+        type,
+        slug,
+        title,
+        description:
+          typeof fm.description === "string"
+            ? fm.description
+            : typeof fm.summary === "string"
+              ? fm.summary
+              : undefined,
+        tags: toStringArray(fm.tags),
+        related: rawRelated.map((r) => resolveEdgeTarget(type, r)),
+        meta: rest,
+        body: fmMatch[2].trim(),
+      });
+    }
   }
 
   return nodes;
@@ -125,8 +142,9 @@ export interface CourseApiResult {
 export async function writeCourseApi(
   contentDir: string,
   distPath: string,
+  collections: CourseCollection[],
 ): Promise<CourseApiResult> {
-  const nodes = await readCourseNodes(contentDir);
+  const nodes = await readCourseNodes(contentDir, collections);
   const graph = resolveGraph(nodes);
 
   const apiDir = join(distPath, "api");

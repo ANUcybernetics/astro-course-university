@@ -3,6 +3,120 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide
 history see the root `CHANGELOG.md`.
 
+## 2026-04-29
+
+### Refactor to a graph layer (breaking)
+
+The package no longer hardcodes the `topics` / `labs` / `assessments`
+vocabulary. The schema layer and the graph integration now treat
+"graph-participating collection" as the abstraction; consumers pick the
+collection keys, directories, and singular type names that fit their
+course.
+
+**Removed**
+
+- `defineTopicsCollection`, `defineLabsCollection`,
+  `defineAssessmentsCollection` — these baked in directory names, an
+  Astro collection key, and (for labs/assessments) a hardcoded
+  `weekSchema` (range 1-12).
+- `defineCourseCollections()` and its `DefineCourseCollectionsOptions`.
+- The `DIR_TO_TYPE` constant in `course-content.ts`. `courseGraph()`
+  no longer auto-discovers `src/content/{topics,labs,assessments}`.
+
+**Added**
+
+- `courseNodeSchema` — the bare Zod shape for any node that
+  participates in the graph (`title`, `summary`, `tags`, `related`,
+  `published`). Consumers compose collections by `extend`ing this and
+  passing the result to `defineCollection` themselves.
+- `CourseCollection` type — `{ key: string; dir: string; type: string }`.
+- `CourseGraphOptions` type — `{ collections: CourseCollection[] }`.
+  `courseGraph()` is now invoked as `courseGraph({ collections: [...] })`.
+- `readCourseNodes(contentDir, collections)` and
+  `writeCourseApi(contentDir, distPath, collections)` take the
+  collections config explicitly. Only the configured `dir` values are
+  walked, and each node is assigned the configured `type`.
+
+**Kept**
+
+- `defineNewsCollection` and `definePeopleCollection` — these bake in
+  `reference("people")` and `image()` respectively, so they stay as
+  factories rather than as bare schemas.
+
+**Side benefit**
+
+- The `weekSchema` hardcoded 1-12 range is gone. Consumers pick their
+  own week range, unblocking 13-week and module-based courses.
+
+**Migration**
+
+`src/content.config.ts`:
+
+```diff
+-import { defineCourseCollections } from "astro-course-anu/schemas";
+-export const collections = defineCourseCollections();
++import { defineCollection } from "astro:content";
++import { glob } from "astro/loaders";
++import { z } from "astro/zod";
++import {
++  courseNodeSchema,
++  defineNewsCollection,
++  definePeopleCollection,
++} from "astro-course-anu/schemas";
++
++const loader = (dir) =>
++  glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
++
++export const collections = {
++  topics: defineCollection({
++    loader: loader("topics"),
++    schema: courseNodeSchema.passthrough(),
++  }),
++  labs: defineCollection({
++    loader: loader("labs"),
++    schema: courseNodeSchema
++      .extend({ week: z.coerce.number().int().min(1).max(13) })
++      .passthrough(),
++  }),
++  assessments: defineCollection({
++    loader: loader("assessments"),
++    schema: courseNodeSchema
++      .extend({
++        week: z.coerce.number().int().min(1).max(13),
++        due: z.coerce.date().nullish(),
++        weight: z.coerce.number().nullish(),
++      })
++      .passthrough(),
++  }),
++  news: defineNewsCollection(),
++  people: definePeopleCollection(),
++};
+```
+
+`astro.config.mjs`:
+
+```diff
+ integrations: [
+   anuTheme(),
+-  courseGraph(),
++  courseGraph({
++    collections: [
++      { key: "topics", dir: "topics", type: "topic" },
++      { key: "labs", dir: "labs", type: "lab" },
++      { key: "assessments", dir: "assessments", type: "assessment" },
++    ],
++  }),
+ ],
+```
+
+The `key` is the Astro collection name (used by
+`getPublishedCollection(key)`), `dir` is the directory under
+`src/content/` to walk, and `type` is the singular graph node type
+(becomes the `/api/<type>/<slug>.json` segment and the cross-type
+prefix in `related: ["<type>/<slug>"]` edges). Renaming a collection
+is now an honest one-place change: rename the directory, update
+`dir`/`type`/`key` in the config, and the graph follows.
+
 ## 2026-04-15
 
 ### Add `news` and `people` collections
