@@ -55,8 +55,7 @@ import {
   definePeopleCollection,
 } from "astro-course-anu/schemas";
 
-const loader = (dir: string) =>
-  glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
+const loader = (dir: string) => glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
 
 export const collections = {
   topics: defineCollection({
@@ -65,9 +64,7 @@ export const collections = {
   }),
   labs: defineCollection({
     loader: loader("labs"),
-    schema: courseNodeSchema
-      .extend({ week: z.coerce.number().int().min(1).max(13) })
-      .passthrough(),
+    schema: courseNodeSchema.extend({ week: z.coerce.number().int().min(1).max(13) }).passthrough(),
   }),
   assessments: defineCollection({
     loader: loader("assessments"),

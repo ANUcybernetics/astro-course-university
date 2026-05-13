@@ -231,17 +231,13 @@ describe("readCourseNodes", () => {
     await writeMockCourse(tmpDir, [
       { collection: "crits", slug: "01-prototype", frontmatter: "title: Prototype 1\nweek: 4" },
     ]);
-    const nodes = await readCourseNodes(tmpDir, [
-      { key: "crits", dir: "crits", type: "crit" },
-    ]);
+    const nodes = await readCourseNodes(tmpDir, [{ key: "crits", dir: "crits", type: "crit" }]);
     expect(nodes).toHaveLength(1);
     expect(nodes[0]).toMatchObject({ id: "crit/01-prototype", type: "crit", slug: "01-prototype" });
   });
 
   fsTest("ignores collections whose dir does not exist", async ({ tmpDir }) => {
-    await writeMockCourse(tmpDir, [
-      { collection: "topics", slug: "x", frontmatter: "title: X" },
-    ]);
+    await writeMockCourse(tmpDir, [{ collection: "topics", slug: "x", frontmatter: "title: X" }]);
     const nodes = await readCourseNodes(tmpDir, [
       { key: "topics", dir: "topics", type: "topic" },
       { key: "missing", dir: "does-not-exist", type: "missing" },
