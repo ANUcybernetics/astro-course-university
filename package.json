@@ -1,7 +1,7 @@
 {
   "name": "astro-course-anu",
   "version": "0.1.0",
-  "description": "Companion to astro-theme-anu for ANU course sites — content-graph integration, Zod schemas for the five standard course collections, and a topic assembler for composing lecture decks from reusable topic files.",
+  "description": "Companion to astro-theme-anu for ANU course sites — build-time content-graph integration (`courseGraph()`), reusable Zod schemas (`courseNodeSchema`, news, people), and a `getPublishedCollection` helper.",
   "keywords": [
     "anu",
     "astro-component",
@@ -45,7 +45,7 @@
     "remark": "^15.0.1",
     "remark-frontmatter": "^5.0.0",
     "unist-util-visit": "^5.1.0",
-    "yaml": "^2.8.3"
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",
