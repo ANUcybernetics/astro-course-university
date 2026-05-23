@@ -48,14 +48,20 @@ Content subpath (`astro-course-anu/content`):
   check. Safe on collections whose schema doesn't define `published` —
   missing fields are treated as published.
 
-Topic assembler subpath (`astro-course-anu/topic-assembler`):
+Topic assembler subpath (`astro-course-anu/topic-assembler`) — **deprecated**:
 
-- `assembleTopics(source, topicsDict)` — the underlying markdown
-  transformation used by the deck preprocessor in the course example.
-  Replaces `<!-- topic: slug -->` HTML comments with the contents of the
-  matching topic file, stripping its frontmatter.
+- `assembleTopics(source, topicsDict)` — replaces `<!-- topic: slug -->`
+  HTML comments in a markdown string with the contents of the matching
+  topic file, stripping its frontmatter
 - `parseTopicDirective(html)` — parse a single HTML comment and return
   the topic slug, or `null` if it isn't a topic directive
+
+These helpers exist for the pre-MDX-deck flow where decks were `.deck.md`
+files and HTML comments were valid syntax. The current astromotion deck
+path uses `.deck.mdx` and the `{/* @include path.mdx */}` directive (which
+also strips yaml frontmatter from the included file), so consumers no
+longer need a preprocessor. The exports are retained for now to avoid a
+breaking change but are not used by the course example.
 
 ## Content graph model
 

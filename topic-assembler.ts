@@ -1,3 +1,9 @@
+/**
+ * @deprecated The HTML-comment `<!-- topic: slug -->` syntax only parsed in
+ * the pre-MDX `.deck.md` flow. Current astromotion decks (`.deck.mdx`) use
+ * `{/* @include path.mdx *​/}` instead, which also strips yaml frontmatter
+ * from the included file. Retained for backward compatibility.
+ */
 import type { Root, Html, RootContent } from "mdast";
 import { remark } from "remark";
 import remarkFrontmatter from "remark-frontmatter";

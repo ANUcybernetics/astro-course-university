@@ -104,9 +104,11 @@ becomes the URL segment under `/api/` and the cross-type prefix in
   Zod shape that consumers extend), plus `defineNewsCollection` and
   `definePeopleCollection`
 - `astro-course-anu/content` — `getPublishedCollection(name, filter?)`
-- `astro-course-anu/topic-assembler` — `assembleTopics` markdown
-  transformer used by the astromotion preprocess hook to splice topic
-  content into lecture decks via `<!-- topic: slug -->` markers
+- `astro-course-anu/topic-assembler` — _deprecated._ `assembleTopics`
+  replaces `<!-- topic: slug -->` markers in pre-MDX `.deck.md` decks.
+  The current astromotion pipeline uses `.deck.mdx` with the
+  `@include` directive (which strips yaml frontmatter), so this helper
+  is no longer required. Kept exported for backward compatibility
 
 ## Status
 
