@@ -77,7 +77,7 @@ describe("courseNodeSchema", () => {
   test("extends cleanly with type-specific fields", () => {
     const critsSchema = courseNodeSchema.extend({
       week: z.number().int().min(1).max(13),
-      repo: z.string().url().nullish(),
+      repo: z.url().nullish(),
     });
     const parsed = critsSchema.parse({
       title: "Prototype 1 crit",

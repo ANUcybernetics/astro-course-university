@@ -16,7 +16,7 @@ function loader(base: string, pattern = "**/*.{md,mdx}") {
 }
 
 function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passthrough: boolean) {
-  return passthrough ? schema.passthrough() : schema;
+  return passthrough ? schema.loose() : schema;
 }
 
 /**
@@ -35,8 +35,8 @@ function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passt
  *     loader: glob({ pattern: "**\/*.{md,mdx}", base: "src/content/crits" }),
  *     schema: courseNodeSchema.extend({
  *       week: z.number().int().min(1).max(13),
- *       repo: z.string().url().nullish(),
- *     }).passthrough(),
+ *       repo: z.url().nullish(),
+ *     }).loose(),
  *   }),
  * };
  * ```
@@ -107,8 +107,8 @@ export function definePeopleCollection(options: DefineCourseCollectionOptions = 
           title: z.string(),
           affiliation: z.string().nullish(),
           role: z.enum(["convenor", "ta", "guest", "other"]).nullish(),
-          email: z.string().email().nullish(),
-          url: z.string().url().nullish(),
+          email: z.email().nullish(),
+          url: z.url().nullish(),
           photo: image().nullish(),
           published: z.coerce.boolean().default(true),
         }),
