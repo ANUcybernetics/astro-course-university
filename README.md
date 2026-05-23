@@ -25,7 +25,7 @@ Requires `astro ^6.0.0` as a peer dependency.
 ## Minimal consumer config
 
 ```js
-// astro.config.mjs
+// astro.config.ts
 import { defineConfig } from "astro/config";
 import anuTheme from "astro-theme-anu";
 import courseGraph from "astro-course-anu";

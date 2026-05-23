@@ -125,7 +125,7 @@ build via Zod validation.
 ## Typical consumer setup
 
 ```ts
-// astro.config.mjs
+// astro.config.ts
 import { defineConfig } from "astro/config";
 import anuTheme from "astro-theme-anu";
 import courseGraph from "astro-course-anu";
