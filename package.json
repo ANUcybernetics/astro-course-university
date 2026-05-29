@@ -27,7 +27,6 @@
     "course-content.ts",
     "course-graph.ts",
     "course-graph-integration.ts",
-    "topic-assembler.ts",
     "schemas.ts"
   ],
   "type": "module",
@@ -35,20 +34,15 @@
     ".": "./index.ts",
     "./content": "./content-helpers.ts",
     "./schemas": "./schemas.ts",
-    "./topic-assembler": "./topic-assembler.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
     "test": "vitest run"
   },
   "dependencies": {
-    "remark": "^15.0.1",
-    "remark-frontmatter": "^5.0.0",
-    "unist-util-visit": "^5.1.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@types/mdast": "^4.0.4",
     "vitest": "^4.1.5"
   },
   "peerDependencies": {

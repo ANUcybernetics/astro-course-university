@@ -48,20 +48,17 @@ Content subpath (`astro-course-anu/content`):
   check. Safe on collections whose schema doesn't define `published` —
   missing fields are treated as published.
 
-Topic assembler subpath (`astro-course-anu/topic-assembler`) — **deprecated**:
+Lecture decks (no package code):
 
-- `assembleTopics(source, topicsDict)` — replaces `<!-- topic: slug -->`
-  HTML comments in a markdown string with the contents of the matching
-  topic file, stripping its frontmatter
-- `parseTopicDirective(html)` — parse a single HTML comment and return
-  the topic slug, or `null` if it isn't a topic directive
-
-These helpers exist for the pre-MDX-deck flow where decks were `.deck.md`
-files and HTML comments were valid syntax. The current astromotion deck
-path uses `.deck.mdx` and the `{/* @include path.mdx */}` directive (which
-also strips yaml frontmatter from the included file), so consumers no
-longer need a preprocessor. The exports are retained for now to avoid a
-breaking change but are not used by the course example.
+Topics compose into astromotion `.deck.mdx` decks through the
+`{/* @include path.mdx */}` directive, which splices a topic's body and
+strips its yaml frontmatter — so the same topic file doubles as a
+standalone page and a deck slide. This is a plain astromotion concern;
+the package ships no deck-composition preprocessor. The old, deprecated
+`topic-assembler` helper (`assembleTopics` / `parseTopicDirective`, for
+the pre-MDX `<!-- topic: slug -->` `.deck.md` flow) was removed. The
+content graph governs topic relationships; decks just include topic
+bodies, with no build-time path enforcement between them.
 
 ## Content graph model
 
@@ -181,14 +178,6 @@ export const collections = {
 };
 ```
 
-```js
-// src/deck-preprocess.mjs
-import { readFileSync, readdirSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { assembleTopics } from "astro-course-anu/topic-assembler";
-// ...
-```
-
 ## Tests
 
 Unit tests live next to the sources:
@@ -197,7 +186,6 @@ Unit tests live next to the sources:
   references, dangling/self-ref detection)
 - `course-content.test.ts` — filesystem reader + end-to-end graph +
   API writer, exercised against an explicit collections config
-- `topic-assembler.test.ts` — topic directive parsing + assembly
 - `schemas.test.ts` — `courseNodeSchema` plus the `news` and `people`
   factories exercised directly (valid frontmatter, defaults,
   required-field rejection, role/email/url validation, passthrough

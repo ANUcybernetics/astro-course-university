@@ -5,8 +5,7 @@ Companion package to
 
 Provides a typed content-graph layer over your own Astro collections,
 schemas for the `news` and `people` collections (which need
-package-level wiring around `reference()` and `image()`), a topic
-assembler for composing lecture decks out of reusable chunks, and a
+package-level wiring around `reference()` and `image()`), and a
 build-time Astro integration that validates the graph and emits a
 static JSON API.
 
@@ -104,11 +103,15 @@ becomes the URL segment under `/api/` and the cross-type prefix in
   Zod shape that consumers extend), plus `defineNewsCollection` and
   `definePeopleCollection`
 - `astro-course-anu/content` — `getPublishedCollection(name, filter?)`
-- `astro-course-anu/topic-assembler` — _deprecated._ `assembleTopics`
-  replaces `<!-- topic: slug -->` markers in pre-MDX `.deck.md` decks.
-  The current astromotion pipeline uses `.deck.mdx` with the
-  `@include` directive (which strips yaml frontmatter), so this helper
-  is no longer required. Kept exported for backward compatibility
+
+## Lecture decks
+
+This package doesn't process slide decks. Topics compose into
+astromotion decks through the `{/* @include ../content/topics/<slug>.mdx */}`
+directive in a `.deck.mdx` file, which splices the topic body and
+strips its frontmatter — so a topic doubles as a standalone page and a
+deck slide, while the content graph still governs how topics relate.
+See the theme's "Lecture decks" guide for the full picture.
 
 ## Status
 

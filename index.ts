@@ -12,6 +12,3 @@ export type { ContentNode, GraphEdge, GraphError, ResolvedGraph } from "./course
 
 export { readCourseNodes, writeCourseApi } from "./course-content.js";
 export type { CourseApiResult, CourseCollection } from "./course-content.js";
-
-export { parseTopicDirective, assembleTopics } from "./topic-assembler.js";
-export type { AssembleResult } from "./topic-assembler.js";

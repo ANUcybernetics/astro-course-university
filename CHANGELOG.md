@@ -3,6 +3,20 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide
 history see the root `CHANGELOG.md`.
 
+## 2026-05-29 — Remove deprecated `topic-assembler`
+
+- Removed the `astro-course-anu/topic-assembler` subpath export and its
+  `assembleTopics` / `parseTopicDirective` helpers (and the
+  `AssembleResult` type). They implemented the pre-MDX
+  `<!-- topic: slug -->` `.deck.md` preprocessor, which astromotion's
+  `.deck.mdx` `@include` directive superseded; nothing consumed them.
+  Also dropped the now-unused `remark`, `remark-frontmatter`, and
+  `unist-util-visit` dependencies and the `@types/mdast` dev dependency.
+- No change to the content graph: `courseGraph()`, `courseNodeSchema`,
+  the `news` / `people` schema factories, `related` edges, and the
+  `/api/*.json` output are unaffected. Topics still compose into decks
+  via astromotion `@include`.
+
 ## 2026-04-29
 
 ### Refactor to a graph layer (breaking)
