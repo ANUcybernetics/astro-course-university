@@ -185,7 +185,9 @@ const topics = (await getCollection("topics")).filter(
 to:
 
 ```ts
-const topics = await getPublishedCollection("topics", (t) => t.data.tags.includes("admin"));
+const topics = await getPublishedCollection("topics", (t) =>
+  t.data.tags.includes("admin"),
+);
 ```
 
 Motivation: the three course schemas all default `published` to `true`,
