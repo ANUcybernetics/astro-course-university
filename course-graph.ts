@@ -1,3 +1,8 @@
+export interface ExternalLink {
+  label: string;
+  url: string;
+}
+
 export interface ContentNode {
   id: string;
   type: string;
@@ -6,6 +11,7 @@ export interface ContentNode {
   description?: string;
   tags: string[];
   related: string[];
+  links: ExternalLink[];
   meta: Record<string, unknown>;
   body: string;
 }
@@ -28,8 +34,34 @@ export interface ResolvedGraph {
   errors: GraphError[];
 }
 
-export function resolveEdgeTarget(fromType: string, rawRef: string): string {
-  return rawRef.includes("/") ? rawRef : `${fromType}/${rawRef}`;
+/**
+ * Resolve a content ref against the collection it was declared in. A ref
+ * is `<collection>/<slug>` — the one address format shared by `related:`
+ * entries, `{/* embed: ... *\/}` directives, graph node ids, site URLs
+ * (`/<collection>/<slug>/`) and API paths (`/api/<collection>/<slug>.json`).
+ * A bare slug is shorthand for "same collection as the declaring node".
+ */
+export function resolveEdgeTarget(fromCollection: string, rawRef: string): string {
+  return rawRef.includes("/") ? rawRef : `${fromCollection}/${rawRef}`;
+}
+
+/**
+ * Extract content refs from `{/* embed: <ref> *\/}` transclusion
+ * directives in a raw markdown/MDX body. An embed implies a `related`
+ * edge, so consumers never declare the same connection twice. Any
+ * `#section` fragment is stripped — the graph links whole nodes.
+ * Returned refs are deduplicated but unresolved (bare slugs pass
+ * through); resolve them with `resolveEdgeTarget`.
+ */
+const EMBED_DIRECTIVE = /\{\s*\/\*\s*embed:\s*([^\s*]+)/g;
+
+export function parseEmbedRefs(body: string): string[] {
+  const refs = new Set<string>();
+  for (const match of body.matchAll(EMBED_DIRECTIVE)) {
+    const ref = match[1].split("#")[0];
+    if (ref) refs.add(ref);
+  }
+  return [...refs];
 }
 
 export function resolveGraph(nodes: ContentNode[]): ResolvedGraph {
@@ -95,6 +127,7 @@ export function generateNodeJson(node: ContentNode): string {
       ...(node.description && { description: node.description }),
       tags: node.tags,
       related: node.related,
+      links: node.links,
       meta: node.meta,
       body: node.body,
     },

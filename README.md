@@ -1,17 +1,16 @@
 # astro-course-anu
 
-Companion package to
-[`astro-theme-anu`](../astro-theme-anu) for course-site authoring.
+Companion package to [`astro-theme-anu`](../astro-theme-anu) for course-site
+authoring.
 
-Provides a typed content-graph layer over your own Astro collections,
-schemas for the `news` and `people` collections (which need
-package-level wiring around `reference()` and `image()`), and a
-build-time Astro integration that validates the graph and emits a
-static JSON API.
+Provides a typed content-graph layer over your own Astro collections, schemas
+for the `news` and `people` collections (which need package-level wiring around
+`reference()` and `image()`), and a build-time Astro integration that validates
+the graph and emits a static JSON API.
 
 The package is theme-agnostic — it handles data and validation, while
-`astro-theme-anu` handles visual presentation. Consumers of a course
-site typically install both.
+`astro-theme-anu` handles visual presentation. Consumers of a course site
+typically install both.
 
 ## Install
 
@@ -34,9 +33,11 @@ export default defineConfig({
     anuTheme(),
     courseGraph({
       collections: [
-        { key: "topics", dir: "topics", type: "topic" },
-        { key: "labs", dir: "labs", type: "lab" },
-        { key: "assessments", dir: "assessments", type: "assessment" },
+        { key: "topics" },
+        { key: "labs" },
+        { key: "assessments" },
+        // collections outside src/content/ can join the graph too, e.g.
+        // astromotion decks: { key: "lectures", dir: "decks", suffix: ".deck.mdx" }
       ],
     }),
   ],
@@ -83,38 +84,59 @@ export const collections = {
 };
 ```
 
-At build time, `courseGraph()` walks the configured directories under
-`src/content/`, validates the `related` edges (undirected thematic
-links with cross-type references via `type/slug` syntax), and emits a
-static JSON API at `/api/index.json` + `/api/<type>/<slug>.json` for
-each node.
+At build time, `courseGraph()` walks the configured directories, validates the
+graph, and emits a static JSON API at `/api/index.json` +
+`/api/<collection>/<slug>.json` for each node.
 
-The `key` field in each collection entry is the Astro collection name
-(used by `getPublishedCollection(key)`); `dir` is the directory under
-`src/content/` to walk; `type` is the singular graph node type that
-becomes the URL segment under `/api/` and the cross-type prefix in
-`related: ["<type>/<slug>"]` edges.
+## Refs
+
+One address format — the **ref**, `<collection>/<slug>` — names a node
+everywhere: `related:` frontmatter entries, `{/* embed: ... */}` transclusion
+directives, graph node ids, API paths, and (by the site's own routing
+convention) page URLs at `/<collection>/<slug>/`. A bare slug is shorthand for
+"same collection as the declaring node". The collection `key` is the whole
+story: collection name = node type = ref prefix = API path segment; `dir`
+(relative to `src/`, default `content/<key>`) and `suffix` (e.g. `".deck.mdx"`)
+only exist so collections outside `src/content/` can join the graph.
+
+Nodes connect two ways, both undirected and both build-validated (dangling or
+self refs fail the build):
+
+- **`related:`** frontmatter — refs to other nodes in the site
+- **`{/* embed: <ref>[#section] */}`** body directives — the deck transclusion
+  syntax; an embed implies a related edge, so transcluding a node never needs a
+  second declaration
+
+External URLs live in the separate **`links:`** frontmatter field
+(`{ label, url }` pairs) — rendered alongside related content and exposed in the
+API, but never graph edges.
 
 ## Entry points
 
-- `astro-course-anu` — default export is `courseGraph(options)`; named
-  exports for `readCourseNodes`, `writeCourseApi`, `resolveGraph`,
-  `generateIndexJson`, `generateNodeJson`, plus the types
-  `ContentNode`, `GraphEdge`, `GraphError`, `ResolvedGraph`,
+- `astro-course-anu` — default export is `courseGraph(options)`; named exports
+  for `readCourseNodes`, `writeCourseApi`, `resolveGraph`, `parseEmbedRefs`,
+  `generateIndexJson`, `generateNodeJson`, plus the types `ContentNode`,
+  `ExternalLink`, `GraphEdge`, `GraphError`, `ResolvedGraph`,
   `CourseCollection`, `CourseGraphOptions`, `CourseApiResult`
-- `astro-course-anu/schemas` — `courseNodeSchema` (the bare graph-node
-  Zod shape that consumers extend), plus `defineNewsCollection` and
+- `astro-course-anu/schemas` — `courseNodeSchema` (the bare graph-node Zod shape
+  that consumers extend), plus `defineNewsCollection` and
   `definePeopleCollection`
-- `astro-course-anu/content` — `getPublishedCollection(name, filter?)`
+- `astro-course-anu/content` — `getPublishedCollection(name, filter?)` and
+  `getRelatedEntries(entry, collections)` (the render-time counterpart of the
+  build-time graph: every published entry connected to `entry` in either
+  direction)
+- `astro-course-anu/components/RelatedContent.astro` — drop-in related-content
+  block for detail pages: internal related entries plus external `links`,
+  rendering nothing when the node has neither
 
 ## Lecture decks
 
-This package doesn't process slide decks. Topics compose into
-astromotion decks through the `{/* @include ../content/topics/<slug>.mdx */}`
-directive in a `.deck.mdx` file, which splices the topic body and
-strips its frontmatter — so a topic doubles as a standalone page and a
-deck slide, while the content graph still governs how topics relate.
-See the theme's "Lecture decks" guide for the full picture.
+This package doesn't process slide decks — the consumer site's remark plugin
+resolves `{/* embed: <ref>[#section] */}` directives in `.deck.mdx` files by
+splicing the referenced node's body (or just one `#section` of it) into the
+deck. What this package contributes is the graph side: those same embed
+directives are parsed out of node bodies at build time and become validated
+related edges, so the deck→topic mapping maintains itself.
 
 ## Status
 

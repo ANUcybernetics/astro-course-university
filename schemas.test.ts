@@ -42,6 +42,7 @@ describe("courseNodeSchema", () => {
       summary: "Reusable units of behaviour",
       tags: ["concept", "fundamentals"],
       related: ["variables", "scope"],
+      links: [{ label: "MDN", url: "https://developer.mozilla.org" }],
       published: false,
     });
     expect(parsed).toMatchObject({
@@ -49,8 +50,26 @@ describe("courseNodeSchema", () => {
       summary: "Reusable units of behaviour",
       tags: ["concept", "fundamentals"],
       related: ["variables", "scope"],
+      links: [{ label: "MDN", url: "https://developer.mozilla.org" }],
       published: false,
     });
+  });
+
+  test("links default to empty array", () => {
+    const parsed = courseNodeSchema.parse({ title: "x" });
+    expect(parsed.links).toEqual([]);
+  });
+
+  test("rejects links without a label", () => {
+    expect(() =>
+      courseNodeSchema.parse({ title: "x", links: [{ url: "https://example.com" }] }),
+    ).toThrow();
+  });
+
+  test("rejects links with a malformed url", () => {
+    expect(() =>
+      courseNodeSchema.parse({ title: "x", links: [{ label: "bad", url: "not a url" }] }),
+    ).toThrow();
   });
 
   test("rejects missing title", () => {

@@ -3,6 +3,69 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-03 — Refs everywhere: plural types, embed edges, external links (breaking)
+
+One address format — the **ref**, `<collection>/<slug>` — now names a node in
+`related:` entries, `{/* embed: ... */}` transclusion directives, graph node
+ids, API paths, and (by the site's own convention) page URLs. A bare slug is
+shorthand for "same collection as the declaring node".
+
+**Breaking**
+
+- `CourseCollection` is now `{ key: string; dir?: string; suffix?: string }`.
+  The `type` field is gone: the collection `key` **is** the graph node type, the
+  `/api/<key>/<slug>.json` path segment, and the cross-collection ref prefix.
+  `dir` is now relative to `src/` (not `src/content/`) and defaults to
+  `content/<key>`, so most entries collapse to `{ key: "topics" }`.
+- `readCourseNodes` and `writeCourseApi` take `srcDir` (the project `src/` dir)
+  as their first argument instead of the content dir.
+- API output moves from singular to plural segments: `/api/topic/<slug>.json` →
+  `/api/topics/<slug>.json`, and node ids/refs follow (`topic/x` → `topics/x`).
+  Existing content with bare same-collection `related` slugs needs no changes;
+  qualified cross-type refs must be pluralised.
+
+**Added**
+
+- **Embed-derived edges.** `{/* embed: <ref>[#section] */}` directives in a
+  node's body (the deck transclusion syntax) merge into its `related` refs
+  automatically — transcluding a node never needs a second declaration, and a
+  dangling embed target now fails the build like any dangling ref.
+  `parseEmbedRefs(body)` is exported.
+- **`links` frontmatter field** on `courseNodeSchema` — external URLs as
+  `{ label, url }` pairs. Rendered alongside related content, exposed on
+  per-node API JSON, never graph edges. New `ExternalLink` type.
+- **`suffix` collection option** (e.g. `".deck.mdx"`) so non-content collections
+  like astromotion decks can join the graph:
+  `{ key: "lectures", dir: "decks", suffix: ".deck.mdx" }`.
+- **`getRelatedEntries(entry, collections)`** in `astro-course-anu/content` —
+  the render-time counterpart of the build-time graph: every published entry
+  connected to `entry` in either direction (declared, embedded, or incoming), so
+  `related` is genuinely undirected — declare on whichever side is convenient
+  and both pages show the connection.
+- **`RelatedContent.astro`** component (new `./components/*` export) — a drop-in
+  related-content block for detail pages: internal related entries as
+  `/<collection>/<slug>/` links plus external `links`, rendering nothing when
+  the node has neither.
+
+**Migration**
+
+```diff
+ courseGraph({
+   collections: [
+-    { key: "topics", dir: "topics", type: "topic" },
+-    { key: "crits", dir: "crits", type: "crit" },
+-    { key: "assessments", dir: "assessments", type: "assessment" },
++    { key: "topics" },
++    { key: "crits" },
++    { key: "assessments" },
++    { key: "lectures", dir: "decks", suffix: ".deck.mdx" },
+   ],
+ })
+```
+
+Then pluralise any qualified refs in frontmatter (`related: [topic/x]` →
+`related: [topics/x]`) and any consumers of `/api/<type>/` paths.
+
 ## 2026-06-23 — Breaking: require Astro 7
 
 The `astro` peer dependency now requires `^7` (was `^6`). The build-time

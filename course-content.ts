@@ -1,42 +1,36 @@
 import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
-import { join, relative, extname, basename } from "node:path";
+import { join, extname, basename } from "node:path";
 import { parse as parseYaml } from "yaml";
 import {
   resolveEdgeTarget,
+  parseEmbedRefs,
   resolveGraph,
   generateIndexJson,
   generateNodeJson,
 } from "./course-graph.js";
-import type { ContentNode, ResolvedGraph } from "./course-graph.js";
+import type { ContentNode, ExternalLink, ResolvedGraph } from "./course-graph.js";
 
 /**
- * Configuration for a single graph-participating collection. `key` is the
- * Astro collection name (used by consumers via `getPublishedCollection`),
- * `dir` is the directory under `src/content/` to walk, and `type` is the
- * singular graph node type (becomes the `/api/<type>/<slug>.json`
- * segment and the cross-type prefix for `related: ["<type>/<slug>"]`
- * edges).
+ * Configuration for a single graph-participating collection. `key` is
+ * the Astro collection name, and it names everything: the graph node
+ * type, the `/api/<key>/<slug>.json` path segment, and the
+ * cross-collection prefix in refs (`related: ["<key>/<slug>"]`) — one
+ * word, matching the site's `/<key>/<slug>/` URLs.
  */
 export interface CourseCollection {
   key: string;
-  dir: string;
-  type: string;
-}
-
-function parseNodeLocation(
-  filePath: string,
-  contentDir: string,
-  dirToType: Map<string, string>,
-): { type: string; slug: string } | null {
-  const rel = relative(contentDir, filePath);
-  const parts = rel.split("/");
-  if (parts.length < 2) return null;
-
-  const type = dirToType.get(parts[0]);
-  if (!type) return null;
-
-  const slug = basename(parts[parts.length - 1], extname(parts[parts.length - 1]));
-  return { type, slug };
+  /**
+   * Directory to walk, relative to the project `src/` dir. Defaults to
+   * `content/<key>`. Lets non-`src/content` collections (e.g. astromotion
+   * decks in `src/decks/`) join the graph.
+   */
+  dir?: string;
+  /**
+   * Filename suffix to match and strip when deriving slugs (e.g.
+   * `".deck.mdx"`). Files not ending in the suffix are skipped. Defaults
+   * to plain `.md`/`.mdx` with the extension stripped.
+   */
+  suffix?: string;
 }
 
 async function collectMarkdownFiles(dir: string): Promise<string[]> {
@@ -69,20 +63,36 @@ function toStringArray(val: unknown): string[] {
   return [];
 }
 
+function toExternalLinks(val: unknown): ExternalLink[] {
+  if (!Array.isArray(val)) return [];
+  return val.flatMap((item) => {
+    if (item === null || typeof item !== "object") return [];
+    const { label, url } = item as Record<string, unknown>;
+    return typeof label === "string" && typeof url === "string" ? [{ label, url }] : [];
+  });
+}
+
 export async function readCourseNodes(
-  contentDir: string,
+  srcDir: string,
   collections: CourseCollection[],
 ): Promise<ContentNode[]> {
-  const dirToType = new Map(collections.map((c) => [c.dir, c.type]));
   const nodes: ContentNode[] = [];
 
   for (const collection of collections) {
-    const collectionDir = join(contentDir, collection.dir);
+    const type = collection.key;
+    const collectionDir = join(srcDir, collection.dir ?? join("content", collection.key));
     const files = await collectMarkdownFiles(collectionDir);
 
     for (const filePath of files) {
-      const location = parseNodeLocation(filePath, contentDir, dirToType);
-      if (!location) continue;
+      const filename = basename(filePath);
+      let slug: string;
+      if (collection.suffix) {
+        if (!filename.endsWith(collection.suffix)) continue;
+        slug = filename.slice(0, -collection.suffix.length);
+      } else {
+        slug = basename(filename, extname(filename));
+      }
+      if (!slug) continue;
 
       const source = await readFile(filePath, "utf-8");
       const fmMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
@@ -97,10 +107,19 @@ export async function readCourseNodes(
       const title = fm.title;
       if (typeof title !== "string") continue;
 
-      const { type, slug } = location;
       const id = `${type}/${slug}`;
+      const body = fmMatch[2].trim();
 
-      const rawRelated = toStringArray(fm.related);
+      // An embed implies a related edge: `{/* embed: <ref> */}` directives
+      // in the body merge into the declared `related` refs, deduplicated,
+      // so transcluding a node never needs a second declaration.
+      const related = [
+        ...new Set(
+          [...toStringArray(fm.related), ...parseEmbedRefs(body)].map((r) =>
+            resolveEdgeTarget(type, r),
+          ),
+        ),
+      ];
 
       const {
         title: _t,
@@ -108,6 +127,7 @@ export async function readCourseNodes(
         description: _d,
         tags: _tags,
         related: _rel,
+        links: _links,
         published: _p,
         ...rest
       } = fm;
@@ -124,9 +144,10 @@ export async function readCourseNodes(
               ? fm.summary
               : undefined,
         tags: toStringArray(fm.tags),
-        related: rawRelated.map((r) => resolveEdgeTarget(type, r)),
+        related,
+        links: toExternalLinks(fm.links),
         meta: rest,
-        body: fmMatch[2].trim(),
+        body,
       });
     }
   }
@@ -140,11 +161,11 @@ export interface CourseApiResult {
 }
 
 export async function writeCourseApi(
-  contentDir: string,
+  srcDir: string,
   distPath: string,
   collections: CourseCollection[],
 ): Promise<CourseApiResult> {
-  const nodes = await readCourseNodes(contentDir, collections);
+  const nodes = await readCourseNodes(srcDir, collections);
   const graph = resolveGraph(nodes);
 
   const apiDir = join(distPath, "api");

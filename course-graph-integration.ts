@@ -1,16 +1,16 @@
 import type { AstroIntegration } from "astro";
-import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeCourseApi } from "./course-content.js";
 import type { CourseCollection } from "./course-content.js";
 
 export interface CourseGraphOptions {
   /**
-   * Collections that participate in the content graph. Each entry maps
-   * an Astro collection `key` (used by `getPublishedCollection(key)`) to
-   * the on-disk `dir` under `src/content/` and the singular graph node
-   * `type` (which becomes the `/api/<type>/<slug>.json` segment and the
-   * cross-type prefix in `related: ["<type>/<slug>"]` edges).
+   * Collections that participate in the content graph. Each entry names
+   * an Astro collection by `key`, which doubles as the graph node type,
+   * the `/api/<key>/<slug>.json` path segment, and the cross-collection
+   * ref prefix (`related: ["<key>/<slug>"]`). `dir` (relative to `src/`,
+   * default `content/<key>`) and `suffix` (e.g. `".deck.mdx"`) let
+   * collections outside `src/content/` join the graph.
    */
   collections: CourseCollection[];
 }
@@ -34,8 +34,7 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
           return;
         }
 
-        const contentDir = join(srcDir, "content");
-        const { graph, filesWritten } = await writeCourseApi(contentDir, distPath, collections);
+        const { graph, filesWritten } = await writeCourseApi(srcDir, distPath, collections);
         const errorCount = graph.errors.length;
         if (errorCount > 0) {
           const lines = graph.errors.slice(0, 20).map((e) => `  ${e.type}: ${e.detail}`);

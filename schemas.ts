@@ -41,16 +41,20 @@ function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passt
  * };
  * ```
  *
- * The five shape fields are the ones `courseGraph()` reads when walking
+ * The shape fields are the ones `courseGraph()` reads when walking
  * content: `title` and `summary` flow into the JSON API, `tags` drives
- * tag-filtered listings, `related` drives the undirected graph edges,
- * and `published: false` keeps drafts out of the graph and listings.
+ * tag-filtered listings, `related` drives the undirected graph edges
+ * (refs to content within the site, `<collection>/<slug>` or a bare
+ * same-collection slug), `links` carries external URLs (rendered
+ * alongside related content but never graph edges), and
+ * `published: false` keeps drafts out of the graph and listings.
  */
 export const courseNodeSchema = z.object({
   title: z.string(),
   summary: z.string().nullish(),
   tags: z.array(z.string()).default([]),
   related: z.array(z.string()).default([]),
+  links: z.array(z.object({ label: z.string(), url: z.url() })).default([]),
   published: z.coerce.boolean().default(true),
 });
 

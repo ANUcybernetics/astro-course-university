@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   resolveEdgeTarget,
+  parseEmbedRefs,
   resolveGraph,
   generateIndexJson,
   generateNodeJson,
@@ -14,6 +15,7 @@ function node(overrides: Partial<ContentNode> & { id: string; title: string }): 
     slug,
     tags: [],
     related: [],
+    links: [],
     meta: {},
     body: "",
     ...overrides,
@@ -21,12 +23,47 @@ function node(overrides: Partial<ContentNode> & { id: string; title: string }): 
 }
 
 describe("resolveEdgeTarget", () => {
-  test("bare slug resolves to same type", () => {
-    expect(resolveEdgeTarget("topic", "variables")).toBe("topic/variables");
+  test("bare slug resolves to same collection", () => {
+    expect(resolveEdgeTarget("topics", "variables")).toBe("topics/variables");
   });
 
-  test("typed ref passes through unchanged", () => {
-    expect(resolveEdgeTarget("lab", "topic/variables")).toBe("topic/variables");
+  test("qualified ref passes through unchanged", () => {
+    expect(resolveEdgeTarget("labs", "topics/variables")).toBe("topics/variables");
+  });
+});
+
+describe("parseEmbedRefs", () => {
+  test("extracts a qualified ref", () => {
+    expect(parseEmbedRefs("{/* embed: topics/agent-loops */}")).toEqual(["topics/agent-loops"]);
+  });
+
+  test("strips section fragments", () => {
+    expect(parseEmbedRefs("{/* embed: topics/overview#learning-outcomes */}")).toEqual([
+      "topics/overview",
+    ]);
+  });
+
+  test("dedupes multiple embeds of the same node", () => {
+    const body = "{/* embed: topics/a#one */}\n\n---\n\n{/* embed: topics/a#two */}";
+    expect(parseEmbedRefs(body)).toEqual(["topics/a"]);
+  });
+
+  test("finds multiple distinct refs in order", () => {
+    const body = "{/* embed: topics/a */}\n\ntext\n\n{/* embed: crits/week-3 */}";
+    expect(parseEmbedRefs(body)).toEqual(["topics/a", "crits/week-3"]);
+  });
+
+  test("tolerates flexible whitespace", () => {
+    expect(parseEmbedRefs("{  /* embed:    topics/a   */ }")).toEqual(["topics/a"]);
+  });
+
+  test("ignores other directives and plain text", () => {
+    const body = "{/* topic: old-syntax */}\n{/* notes: speaker notes */}\nembed: not-a-directive";
+    expect(parseEmbedRefs(body)).toEqual([]);
+  });
+
+  test("returns empty array for empty body", () => {
+    expect(parseEmbedRefs("")).toEqual([]);
   });
 });
 
@@ -156,21 +193,23 @@ describe("generateIndexJson", () => {
 describe("generateNodeJson", () => {
   test("includes all fields and body", () => {
     const n = node({
-      id: "topic/variables",
+      id: "topics/variables",
       title: "Variables",
       description: "Declaring variables",
       tags: ["concept"],
-      related: ["topic/functions"],
+      related: ["topics/functions"],
+      links: [{ label: "MDN", url: "https://developer.mozilla.org" }],
       meta: { references: ["https://example.com"] },
       body: "# Variables\n\nContent here.",
     });
     const json = JSON.parse(generateNodeJson(n));
 
-    expect(json.id).toBe("topic/variables");
-    expect(json.type).toBe("topic");
+    expect(json.id).toBe("topics/variables");
+    expect(json.type).toBe("topics");
     expect(json.title).toBe("Variables");
     expect(json.description).toBe("Declaring variables");
-    expect(json.related).toEqual(["topic/functions"]);
+    expect(json.related).toEqual(["topics/functions"]);
+    expect(json.links).toEqual([{ label: "MDN", url: "https://developer.mozilla.org" }]);
     expect(json.meta.references).toEqual(["https://example.com"]);
     expect(json.body).toContain("# Variables");
   });

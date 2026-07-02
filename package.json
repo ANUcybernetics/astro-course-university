@@ -22,6 +22,7 @@
   },
   "files": [
     "CHANGELOG.md",
+    "components",
     "index.ts",
     "content-helpers.ts",
     "course-content.ts",
@@ -34,6 +35,7 @@
     ".": "./index.ts",
     "./content": "./content-helpers.ts",
     "./schemas": "./schemas.ts",
+    "./components/*": "./components/*",
     "./package.json": "./package.json"
   },
   "scripts": {
