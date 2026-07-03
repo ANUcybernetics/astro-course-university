@@ -292,9 +292,7 @@ describe("readCourseNodes", () => {
     const dir = join(tmpDir, "content", "crit-sessions");
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "01-prototype.md"), "---\ntitle: Prototype 1\nweek: 4\n---\n");
-    const nodes = await readCourseNodes(tmpDir, [
-      { key: "crits", dir: "content/crit-sessions" },
-    ]);
+    const nodes = await readCourseNodes(tmpDir, [{ key: "crits", dir: "content/crit-sessions" }]);
     expect(nodes).toHaveLength(1);
     expect(nodes[0]).toMatchObject({
       id: "crits/01-prototype",
@@ -509,8 +507,7 @@ describe("writeCourseApi", () => {
       {
         collection: "topics",
         slug: "base",
-        frontmatter:
-          "title: Base\nlinks:\n  - label: Example\n    url: https://example.com",
+        frontmatter: "title: Base\nlinks:\n  - label: Example\n    url: https://example.com",
         body: "Base content here.",
       },
     ]);

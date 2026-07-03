@@ -143,11 +143,7 @@ export default defineConfig({
   integrations: [
     anuTheme(),
     courseGraph({
-      collections: [
-        { key: "topics" },
-        { key: "labs" },
-        { key: "assessments" },
-      ],
+      collections: [{ key: "topics" }, { key: "labs" }, { key: "assessments" }],
     }),
   ],
 });
