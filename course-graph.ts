@@ -103,22 +103,40 @@ interface IndexEntry {
   description?: string;
   tags: string[];
   related: string[];
+  meta?: Record<string, unknown>;
+}
+
+/**
+ * Per-node `related` lists as rendered on the site: declared refs first
+ * (in declaration order), then incoming edges from nodes that declared
+ * the connection from their side. The API matches the RelatedContent
+ * block, so "what relates to X" is answerable from X's node alone.
+ */
+export function symmetriseRelated(graph: ResolvedGraph): Map<string, string[]> {
+  const related = new Map<string, string[]>(graph.nodes.map((n) => [n.id, [...n.related]]));
+  for (const edge of graph.edges) {
+    const back = related.get(edge.to);
+    if (back && !back.includes(edge.from)) back.push(edge.from);
+  }
+  return related;
 }
 
 export function generateIndexJson(graph: ResolvedGraph): string {
+  const related = symmetriseRelated(graph);
   const entries: IndexEntry[] = graph.nodes.map((node) => ({
     id: node.id,
     type: node.type,
     title: node.title,
     ...(node.description && { description: node.description }),
     tags: node.tags,
-    related: node.related,
+    related: related.get(node.id) ?? node.related,
+    ...(Object.keys(node.meta).length > 0 && { meta: node.meta }),
   }));
 
   return JSON.stringify({ nodes: entries, edges: graph.edges }, null, 2);
 }
 
-export function generateNodeJson(node: ContentNode): string {
+export function generateNodeJson(node: ContentNode, related: string[] = node.related): string {
   return JSON.stringify(
     {
       id: node.id,
@@ -126,7 +144,7 @@ export function generateNodeJson(node: ContentNode): string {
       title: node.title,
       ...(node.description && { description: node.description }),
       tags: node.tags,
-      related: node.related,
+      related,
       links: node.links,
       meta: node.meta,
       body: node.body,

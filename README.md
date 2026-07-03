@@ -86,7 +86,12 @@ export const collections = {
 
 At build time, `courseGraph()` walks the configured directories, validates the
 graph, and emits a static JSON API at `/api/index.json` +
-`/api/<collection>/<slug>.json` for each node.
+`/api/<collection>/<slug>.json` for each node. Index entries carry
+`{id, type, title, description, tags, related, meta}` (`meta` is the node's
+leftover frontmatter — `week`, `due`, `draft`, and so on — omitted when empty);
+per-node JSON adds `links` and the full markdown `body`. A node's `related` list
+includes incoming edges as well as declared ones, matching what `RelatedContent`
+renders on the page; the top-level `edges` array records declared direction.
 
 ## Refs
 

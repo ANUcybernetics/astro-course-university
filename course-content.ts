@@ -5,6 +5,7 @@ import {
   resolveEdgeTarget,
   parseEmbedRefs,
   resolveGraph,
+  symmetriseRelated,
   generateIndexJson,
   generateNodeJson,
 } from "./course-graph.js";
@@ -174,10 +175,14 @@ export async function writeCourseApi(
   await writeFile(join(apiDir, "index.json"), generateIndexJson(graph));
   let filesWritten = 1;
 
+  const related = symmetriseRelated(graph);
   for (const node of graph.nodes) {
     const nodeDir = join(apiDir, node.type);
     await mkdir(nodeDir, { recursive: true });
-    await writeFile(join(nodeDir, `${node.slug}.json`), generateNodeJson(node));
+    await writeFile(
+      join(nodeDir, `${node.slug}.json`),
+      generateNodeJson(node, related.get(node.id)),
+    );
     filesWritten++;
   }
 

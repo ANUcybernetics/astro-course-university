@@ -6,6 +6,7 @@ export {
   resolveEdgeTarget,
   parseEmbedRefs,
   resolveGraph,
+  symmetriseRelated,
   generateIndexJson,
   generateNodeJson,
 } from "./course-graph.js";

@@ -3,6 +3,26 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-03 — API self-sufficiency: index meta, symmetric related
+
+Two changes that let an agent answer more from fewer fetches, closing the gap
+between the JSON API and the rendered site:
+
+- **`meta` on index nodes.** `/api/index.json` entries now carry the same `meta`
+  object as the per-node JSON (omitted when empty), so structured facts —
+  `week`, `due`, `weight`, `draft` — are answerable from the index alone instead
+  of one fetch per node. Draft status in particular was previously invisible at
+  the index level.
+- **Symmetric `related`.** A node's `related` list (index and per-node JSON) now
+  includes incoming edges as well as declared ones — declared refs first, then
+  nodes that declared the connection from their side. This matches what the
+  RelatedContent block renders on the page, so "what relates to X" no longer
+  needs a scan of every node's declarations. The top-level `edges` array still
+  records declared direction. New `symmetriseRelated(graph)` export;
+  `generateNodeJson` takes an optional second `related` argument.
+
+Released as `astro-course-anu@v0.4.1`.
+
 ## 2026-07-03 — Refs everywhere: plural types, embed edges, external links (breaking)
 
 One address format — the **ref**, `<collection>/<slug>` — now names a node in

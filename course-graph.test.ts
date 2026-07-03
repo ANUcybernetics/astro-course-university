@@ -3,6 +3,7 @@ import {
   resolveEdgeTarget,
   parseEmbedRefs,
   resolveGraph,
+  symmetriseRelated,
   generateIndexJson,
   generateNodeJson,
 } from "./course-graph.js";
@@ -154,6 +155,38 @@ describe("resolveGraph", () => {
   });
 });
 
+describe("symmetriseRelated", () => {
+  test("adds the reverse direction of a declared edge", () => {
+    const nodes = [
+      node({ id: "topic/a", title: "A", related: ["topic/b"] }),
+      node({ id: "topic/b", title: "B" }),
+    ];
+    const related = symmetriseRelated(resolveGraph(nodes));
+    expect(related.get("topic/a")).toEqual(["topic/b"]);
+    expect(related.get("topic/b")).toEqual(["topic/a"]);
+  });
+
+  test("does not duplicate a connection declared from both sides", () => {
+    const nodes = [
+      node({ id: "topic/a", title: "A", related: ["topic/b"] }),
+      node({ id: "topic/b", title: "B", related: ["topic/a"] }),
+    ];
+    const related = symmetriseRelated(resolveGraph(nodes));
+    expect(related.get("topic/a")).toEqual(["topic/b"]);
+    expect(related.get("topic/b")).toEqual(["topic/a"]);
+  });
+
+  test("keeps declared refs ahead of incoming ones", () => {
+    const nodes = [
+      node({ id: "topic/a", title: "A", related: ["topic/b"] }),
+      node({ id: "topic/b", title: "B", related: ["topic/c"] }),
+      node({ id: "topic/c", title: "C" }),
+    ];
+    const related = symmetriseRelated(resolveGraph(nodes));
+    expect(related.get("topic/b")).toEqual(["topic/c", "topic/a"]);
+  });
+});
+
 describe("generateIndexJson", () => {
   test("produces valid JSON with nodes and edges", () => {
     const nodes = [
@@ -180,6 +213,7 @@ describe("generateIndexJson", () => {
 
     const b = json.nodes.find((n: { id: string }) => n.id === "topic/b");
     expect(b).not.toHaveProperty("description");
+    expect(b.related).toEqual(["topic/a"]);
   });
 
   test("omits description when absent", () => {
@@ -188,9 +222,30 @@ describe("generateIndexJson", () => {
     const json = JSON.parse(generateIndexJson(graph));
     expect(json.nodes[0]).not.toHaveProperty("description");
   });
+
+  test("includes meta when present and omits it when empty", () => {
+    const nodes = [
+      node({ id: "crits/week-2", title: "W2", meta: { week: 2, draft: true } }),
+      node({ id: "topic/a", title: "A" }),
+    ];
+    const graph = resolveGraph(nodes);
+    const json = JSON.parse(generateIndexJson(graph));
+
+    const crit = json.nodes.find((n: { id: string }) => n.id === "crits/week-2");
+    expect(crit.meta).toEqual({ week: 2, draft: true });
+
+    const a = json.nodes.find((n: { id: string }) => n.id === "topic/a");
+    expect(a).not.toHaveProperty("meta");
+  });
 });
 
 describe("generateNodeJson", () => {
+  test("uses the passed related list when given", () => {
+    const n = node({ id: "topics/a", title: "A", related: ["topics/b"] });
+    const json = JSON.parse(generateNodeJson(n, ["topics/b", "crits/week-2"]));
+    expect(json.related).toEqual(["topics/b", "crits/week-2"]);
+  });
+
   test("includes all fields and body", () => {
     const n = node({
       id: "topics/variables",
