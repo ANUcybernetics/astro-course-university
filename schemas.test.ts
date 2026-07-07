@@ -33,25 +33,28 @@ describe("courseNodeSchema", () => {
       tags: [],
       related: [],
       published: true,
+      draft: false,
     });
   });
 
   test("parses a fully-populated node", () => {
     const parsed = courseNodeSchema.parse({
       title: "Functions",
-      summary: "Reusable units of behaviour",
+      description: "Reusable units of behaviour",
       tags: ["concept", "fundamentals"],
       related: ["variables", "scope"],
       links: [{ label: "MDN", url: "https://developer.mozilla.org" }],
       published: false,
+      draft: true,
     });
     expect(parsed).toMatchObject({
       title: "Functions",
-      summary: "Reusable units of behaviour",
+      description: "Reusable units of behaviour",
       tags: ["concept", "fundamentals"],
       related: ["variables", "scope"],
       links: [{ label: "MDN", url: "https://developer.mozilla.org" }],
       published: false,
+      draft: true,
     });
   });
 
@@ -121,14 +124,14 @@ describe("defineNewsCollection", () => {
       title: "Assignment 1 extended",
       date: "2026-04-14",
       author: "ben-swift",
-      summary: "Deadline pushed to Friday.",
+      description: "Deadline pushed to Friday.",
       tags: ["announcement"],
       pinned: true,
     });
     expect(parsed).toMatchObject({
       title: "Assignment 1 extended",
       author: { collection: "people", id: "ben-swift" },
-      summary: "Deadline pushed to Friday.",
+      description: "Deadline pushed to Friday.",
       tags: ["announcement"],
       pinned: true,
       published: true, // default

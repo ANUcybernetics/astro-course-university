@@ -3,6 +3,19 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-07 — one vocabulary: description; draft promoted to the shared schema
+
+**Breaking**: `courseNodeSchema` (and the news schema) rename `summary` →
+`description`, matching astromotion deck frontmatter and HTML
+`<meta name="description">` — one name for the one-line blurb across the
+ecosystem. `readCourseNodes` no longer falls back to `summary:` frontmatter;
+rename the field in content when bumping.
+
+`draft: boolean` (default `false`) is promoted into `courseNodeSchema` — it was
+already consumed by the theme's llms.txt generation and declared ad hoc by
+consumers. `published` and `draft` are documented as orthogonal axes: visibility
+vs finality.
+
 ## 2026-07-03 — API self-sufficiency: index meta, symmetric related
 
 Two changes that let an agent answer more from fewer fetches, closing the gap

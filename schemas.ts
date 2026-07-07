@@ -42,20 +42,30 @@ function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passt
  * ```
  *
  * The shape fields are the ones `courseGraph()` reads when walking
- * content: `title` and `summary` flow into the JSON API, `tags` drives
+ * content: `title` and `description` flow into the JSON API (the same
+ * `description` astromotion decks put in `<meta name="description">` —
+ * one name for the concept across the ecosystem), `tags` drives
  * tag-filtered listings, `related` drives the undirected graph edges
  * (refs to content within the site, `<collection>/<slug>` or a bare
- * same-collection slug), `links` carries external URLs (rendered
- * alongside related content but never graph edges), and
- * `published: false` keeps drafts out of the graph and listings.
+ * same-collection slug), and `links` carries external URLs (rendered
+ * alongside related content but never graph edges).
+ *
+ * `published` and `draft` are two orthogonal axes, not one lifecycle.
+ * `published: false` is visibility: it keeps the node out of the graph,
+ * listings, and llms.txt entirely (the page still builds at its URL).
+ * `draft: true` is finality: the node stays visible everywhere but
+ * consumers render it with a not-yet-final marker (llms.txt does this
+ * automatically). All four combinations are coherent — an unpublished
+ * draft is an unlisted preview, reachable by URL, banner intact.
  */
 export const courseNodeSchema = z.object({
   title: z.string(),
-  summary: z.string().nullish(),
+  description: z.string().nullish(),
   tags: z.array(z.string()).default([]),
   related: z.array(z.string()).default([]),
   links: z.array(z.object({ label: z.string(), url: z.url() })).default([]),
   published: z.coerce.boolean().default(true),
+  draft: z.coerce.boolean().default(false),
 });
 
 /**
@@ -80,7 +90,7 @@ export function defineNewsCollection(options: DefineCourseCollectionOptions = {}
         title: z.string(),
         date: z.coerce.date(),
         author: reference("people"),
-        summary: z.string().nullish(),
+        description: z.string().nullish(),
         tags: z.array(z.string()).default([]),
         pinned: z.coerce.boolean().default(false),
         published: z.coerce.boolean().default(true),

@@ -42,7 +42,7 @@ export async function getPublishedCollection<C extends CollectionKey>(
 export interface GraphEntry {
   collection: string;
   id: string;
-  data: { title: string; related?: string[]; published?: boolean; summary?: string | null };
+  data: { title: string; related?: string[]; published?: boolean; description?: string | null };
   body?: string;
 }
 

@@ -39,7 +39,7 @@ describe("readCourseNodes", () => {
       {
         collection: "topics",
         slug: "variables",
-        frontmatter: "title: Variables\nsummary: Declaring variables",
+        frontmatter: "title: Variables\ndescription: Declaring variables",
       },
     ]);
     const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
@@ -226,24 +226,24 @@ describe("readCourseNodes", () => {
     expect(nodes).toHaveLength(0);
   });
 
-  fsTest("prefers description over summary", async ({ tmpDir }) => {
+  fsTest("reads description", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       {
         collection: "topics",
-        slug: "both",
-        frontmatter: "title: Both\ndescription: The description\nsummary: The summary",
+        slug: "desc",
+        frontmatter: "title: Desc\ndescription: The description",
       },
     ]);
     const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes[0].description).toBe("The description");
   });
 
-  fsTest("falls back to summary when no description", async ({ tmpDir }) => {
+  fsTest("does not fall back to legacy summary frontmatter", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       { collection: "topics", slug: "sum", frontmatter: "title: Sum\nsummary: A summary" },
     ]);
     const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
-    expect(nodes[0].description).toBe("A summary");
+    expect(nodes[0].description).toBeUndefined();
   });
 
   fsTest(

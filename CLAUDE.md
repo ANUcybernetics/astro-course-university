@@ -37,11 +37,13 @@ Root entry (`astro-course-anu`):
 Schemas subpath (`astro-course-anu/schemas`):
 
 - `courseNodeSchema` — bare Zod object covering the graph-participating fields
-  (`title`, `summary`, `tags`, `related`, `links`, `published`). Consumers
-  compose collections by `extend`ing this with type-specific fields and passing
-  the result to `defineCollection` themselves. `links` is external URLs as
-  `{ label, url }` pairs — rendered alongside related content and exposed in the
-  API, never graph edges.
+  (`title`, `description`, `tags`, `related`, `links`, `published`, `draft`).
+  Consumers compose collections by `extend`ing this with type-specific fields
+  and passing the result to `defineCollection` themselves. `links` is external
+  URLs as `{ label, url }` pairs — rendered alongside related content and
+  exposed in the API, never graph edges. `published` and `draft` are orthogonal
+  axes: `published: false` is visibility (out of graph/listings/llms.txt
+  entirely), `draft: true` is finality (visible, but flagged not-yet-final).
 - `defineNewsCollection`, `definePeopleCollection` — the two collections that
   genuinely need package-level wiring (`reference("people")` and `image()`
   respectively), so they stay as factories.
@@ -113,9 +115,9 @@ kept out of the content graph:
 
 - **news** — dated announcements and guest-lecture posts. Required fields:
   `title`, `date` (coerced), `author` (a `reference("people")`). Optional:
-  `summary`, `tags`, `pinned`, `published`. News is ephemeral and chronological,
-  not a reusable pedagogical unit — cross-references from news to other content
-  are plain markdown links, not graph edges.
+  `description`, `tags`, `pinned`, `published`. News is ephemeral and
+  chronological, not a reusable pedagogical unit — cross-references from news to
+  other content are plain markdown links, not graph edges.
 - **people** — the cast of the course: convenor, TAs, guest lecturers. `title`
   is the required display name; `affiliation`, `role`
   (`convenor`/`ta`/`guest`/`other`), `email`, `url`, and `photo` (via Astro's

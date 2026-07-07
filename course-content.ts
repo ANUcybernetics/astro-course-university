@@ -124,7 +124,6 @@ export async function readCourseNodes(
 
       const {
         title: _t,
-        summary: _s,
         description: _d,
         tags: _tags,
         related: _rel,
@@ -138,12 +137,7 @@ export async function readCourseNodes(
         type,
         slug,
         title,
-        description:
-          typeof fm.description === "string"
-            ? fm.description
-            : typeof fm.summary === "string"
-              ? fm.summary
-              : undefined,
+        description: typeof fm.description === "string" ? fm.description : undefined,
         tags: toStringArray(fm.tags),
         related,
         links: toExternalLinks(fm.links),
