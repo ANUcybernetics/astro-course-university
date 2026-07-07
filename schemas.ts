@@ -120,7 +120,7 @@ export function definePeopleCollection(options: DefineCourseCollectionOptions = 
         z.object({
           title: z.string(),
           affiliation: z.string().nullish(),
-          role: z.enum(["convenor", "ta", "guest", "other"]).nullish(),
+          role: z.enum(["convenor", "tutor", "guest", "other"]).nullish(),
           email: z.email().nullish(),
           url: z.url().nullish(),
           photo: image().nullish(),

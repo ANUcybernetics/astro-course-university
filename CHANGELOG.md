@@ -3,6 +3,12 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-07 — people role: ta → tutor
+
+**Breaking**: the `people` collection's `role` enum renames `ta` → `tutor`,
+matching the Australian term for teaching staff. Update `role: ta` to
+`role: tutor` in people content when bumping.
+
 ## 2026-07-07 — one vocabulary: description; draft promoted to the shared schema
 
 **Breaking**: `courseNodeSchema` (and the news schema) rename `summary` →
