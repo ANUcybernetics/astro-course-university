@@ -3,6 +3,17 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-11 — site timezone in the API
+
+`courseGraph()` accepts an optional `timezone` (IANA zone name, e.g.
+`"Australia/Canberra"`, validated at config time). When set, it is emitted as a
+`timezone` field on `/api/index.json` and every per-node JSON, giving consumers
+the zone that bare frontmatter dates (`due: 2026-08-17`) are local to. Dates are
+never rewritten to UTC offsets — a zone name stays correct across DST
+transitions where a baked offset would not. `writeCourseApi`,
+`generateIndexJson` and `generateNodeJson` gain matching optional trailing
+parameters. Omitted, nothing changes.
+
 ## 2026-07-07 — people role: ta → tutor
 
 **Breaking**: the `people` collection's `role` enum renames `ta` → `tutor`,

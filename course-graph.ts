@@ -121,7 +121,7 @@ export function symmetriseRelated(graph: ResolvedGraph): Map<string, string[]> {
   return related;
 }
 
-export function generateIndexJson(graph: ResolvedGraph): string {
+export function generateIndexJson(graph: ResolvedGraph, timezone?: string): string {
   const related = symmetriseRelated(graph);
   const entries: IndexEntry[] = graph.nodes.map((node) => ({
     id: node.id,
@@ -133,10 +133,18 @@ export function generateIndexJson(graph: ResolvedGraph): string {
     ...(Object.keys(node.meta).length > 0 && { meta: node.meta }),
   }));
 
-  return JSON.stringify({ nodes: entries, edges: graph.edges }, null, 2);
+  return JSON.stringify(
+    { ...(timezone && { timezone }), nodes: entries, edges: graph.edges },
+    null,
+    2,
+  );
 }
 
-export function generateNodeJson(node: ContentNode, related: string[] = node.related): string {
+export function generateNodeJson(
+  node: ContentNode,
+  related: string[] = node.related,
+  timezone?: string,
+): string {
   return JSON.stringify(
     {
       id: node.id,
@@ -147,6 +155,7 @@ export function generateNodeJson(node: ContentNode, related: string[] = node.rel
       related,
       links: node.links,
       meta: node.meta,
+      ...(timezone && { timezone }),
       body: node.body,
     },
     null,

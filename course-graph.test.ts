@@ -223,6 +223,14 @@ describe("generateIndexJson", () => {
     expect(json.nodes[0]).not.toHaveProperty("description");
   });
 
+  test("includes timezone when passed and omits it otherwise", () => {
+    const graph = resolveGraph([node({ id: "topic/a", title: "A" })]);
+    expect(JSON.parse(generateIndexJson(graph, "Australia/Canberra")).timezone).toBe(
+      "Australia/Canberra",
+    );
+    expect(JSON.parse(generateIndexJson(graph))).not.toHaveProperty("timezone");
+  });
+
   test("includes meta when present and omits it when empty", () => {
     const nodes = [
       node({ id: "crits/week-2", title: "W2", meta: { week: 2, draft: true } }),
@@ -244,6 +252,14 @@ describe("generateNodeJson", () => {
     const n = node({ id: "topics/a", title: "A", related: ["topics/b"] });
     const json = JSON.parse(generateNodeJson(n, ["topics/b", "crits/week-2"]));
     expect(json.related).toEqual(["topics/b", "crits/week-2"]);
+  });
+
+  test("includes timezone when passed and omits it otherwise", () => {
+    const n = node({ id: "topics/a", title: "A" });
+    expect(JSON.parse(generateNodeJson(n, n.related, "Australia/Canberra")).timezone).toBe(
+      "Australia/Canberra",
+    );
+    expect(JSON.parse(generateNodeJson(n))).not.toHaveProperty("timezone");
   });
 
   test("includes all fields and body", () => {

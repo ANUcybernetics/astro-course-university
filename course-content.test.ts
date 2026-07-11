@@ -522,6 +522,30 @@ describe("writeCourseApi", () => {
     expect(baseJson.links).toEqual([{ label: "Example", url: "https://example.com" }]);
   });
 
+  fsTest("threads timezone into index and per-node JSON", async ({ tmpDir }) => {
+    const srcDir = join(tmpDir, "src");
+    const distDir = join(tmpDir, "dist");
+    await mkdir(distDir, { recursive: true });
+
+    await writeMockCourse(srcDir, [
+      {
+        collection: "assessments",
+        slug: "a1",
+        frontmatter: "title: Assignment 1\ndue: 2026-08-17",
+      },
+    ]);
+
+    await writeCourseApi(srcDir, distDir, DEFAULT_COLLECTIONS, "Australia/Canberra");
+    const index = JSON.parse(await readFile(join(distDir, "api", "index.json"), "utf-8"));
+    const nodeJson = JSON.parse(
+      await readFile(join(distDir, "api", "assessments", "a1.json"), "utf-8"),
+    );
+
+    expect(index.timezone).toBe("Australia/Canberra");
+    expect(nodeJson.timezone).toBe("Australia/Canberra");
+    expect(nodeJson.meta.due).toBe("2026-08-17");
+  });
+
   fsTest("writes valid index.json for empty course", async ({ tmpDir }) => {
     const srcDir = join(tmpDir, "src");
     const distDir = join(tmpDir, "dist");

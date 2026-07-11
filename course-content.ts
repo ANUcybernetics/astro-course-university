@@ -159,6 +159,7 @@ export async function writeCourseApi(
   srcDir: string,
   distPath: string,
   collections: CourseCollection[],
+  timezone?: string,
 ): Promise<CourseApiResult> {
   const nodes = await readCourseNodes(srcDir, collections);
   const graph = resolveGraph(nodes);
@@ -166,7 +167,7 @@ export async function writeCourseApi(
   const apiDir = join(distPath, "api");
   await mkdir(apiDir, { recursive: true });
 
-  await writeFile(join(apiDir, "index.json"), generateIndexJson(graph));
+  await writeFile(join(apiDir, "index.json"), generateIndexJson(graph, timezone));
   let filesWritten = 1;
 
   const related = symmetriseRelated(graph);
@@ -175,7 +176,7 @@ export async function writeCourseApi(
     await mkdir(nodeDir, { recursive: true });
     await writeFile(
       join(nodeDir, `${node.slug}.json`),
-      generateNodeJson(node, related.get(node.id)),
+      generateNodeJson(node, related.get(node.id), timezone),
     );
     filesWritten++;
   }

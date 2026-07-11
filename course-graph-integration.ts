@@ -13,10 +13,28 @@ export interface CourseGraphOptions {
    * collections outside `src/content/` join the graph.
    */
   collections: CourseCollection[];
+  /**
+   * IANA timezone name (e.g. `"Australia/Canberra"`) the site's bare
+   * frontmatter dates (`due: 2026-08-17`) should be interpreted in.
+   * Emitted verbatim as a `timezone` field on `/api/index.json` and every
+   * per-node JSON — dates themselves are never rewritten to UTC offsets,
+   * which would bake in one side of a DST transition. Omit and the field
+   * is absent.
+   */
+  timezone?: string;
 }
 
 export default function courseGraph(options: CourseGraphOptions): AstroIntegration {
-  const { collections } = options;
+  const { collections, timezone } = options;
+  if (timezone) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: timezone });
+    } catch {
+      throw new Error(
+        `courseGraph: invalid timezone "${timezone}" — use an IANA zone name like "Australia/Canberra"`,
+      );
+    }
+  }
   let srcDir: string;
 
   return {
@@ -34,7 +52,12 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
           return;
         }
 
-        const { graph, filesWritten } = await writeCourseApi(srcDir, distPath, collections);
+        const { graph, filesWritten } = await writeCourseApi(
+          srcDir,
+          distPath,
+          collections,
+          timezone,
+        );
         const errorCount = graph.errors.length;
         if (errorCount > 0) {
           const lines = graph.errors.slice(0, 20).map((e) => `  ${e.type}: ${e.detail}`);

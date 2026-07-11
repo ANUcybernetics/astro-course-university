@@ -39,6 +39,8 @@ export default defineConfig({
         // collections outside src/content/ can join the graph too, e.g.
         // astromotion decks: { key: "lectures", dir: "decks", suffix: ".deck.mdx" }
       ],
+      // optional: IANA zone the site's bare frontmatter dates are local to
+      timezone: "Australia/Canberra",
     }),
   ],
 });
@@ -92,6 +94,13 @@ leftover frontmatter — `week`, `due`, `draft`, and so on — omitted when empt
 per-node JSON adds `links` and the full markdown `body`. A node's `related` list
 includes incoming edges as well as declared ones, matching what `RelatedContent`
 renders on the page; the top-level `edges` array records declared direction.
+
+If the integration is given a `timezone` (an IANA zone name, validated at config
+time), it is emitted verbatim as a `timezone` field on the index and on every
+per-node JSON, so consumers can interpret bare frontmatter dates like
+`due: 2026-08-17` without guessing. The dates themselves are never rewritten to
+UTC offsets — a zone _name_ stays correct across DST transitions where a baked
+offset would not.
 
 ## Refs
 
