@@ -8,6 +8,7 @@ import {
   generateNodeJson,
 } from "./course-graph.js";
 import type { ContentNode } from "./course-graph.js";
+import courseGraph, { courseMetaSchema } from "./course-graph-integration.js";
 
 function node(overrides: Partial<ContentNode> & { id: string; title: string }): ContentNode {
   const [type, slug] = overrides.id.split("/");
@@ -232,6 +233,21 @@ describe("generateIndexJson", () => {
     expect(JSON.parse(generateIndexJson(graph))).not.toHaveProperty("timezone");
   });
 
+  test("includes the course block when passed and omits it otherwise", () => {
+    const graph = resolveGraph([node({ id: "topic/a", title: "A" })]);
+    const course = {
+      code: "COMP1234",
+      title: "Example Course",
+      session: "Semester 2, 2026",
+      startDate: "2026-07-27",
+      endDate: "2026-10-30",
+      description: "A course about examples.",
+      learningOutcomes: ["explain examples"],
+    };
+    expect(JSON.parse(generateIndexJson(graph, undefined, course)).course).toEqual(course);
+    expect(JSON.parse(generateIndexJson(graph))).not.toHaveProperty("course");
+  });
+
   test("includes meta when present and omits it when empty", () => {
     const nodes = [
       node({ id: "crits/week-2", title: "W2", meta: { week: 2, draft: true } }),
@@ -310,5 +326,43 @@ describe("generateNodeJson", () => {
     });
     const json = JSON.parse(generateNodeJson(n));
     expect(json.spec).toEqual(["deployed and live by the cutoff", "recognisably a blog"]);
+  });
+});
+
+describe("courseMetaSchema", () => {
+  const valid = {
+    code: "COMP1234",
+    title: "Example Course",
+    session: "Semester 2, 2026",
+    startDate: "2026-07-27",
+    endDate: "2026-10-30",
+    description: "A course about examples.",
+  };
+
+  test("parses valid metadata and defaults learningOutcomes to empty", () => {
+    const parsed = courseMetaSchema.parse(valid);
+    expect(parsed).toMatchObject(valid);
+    expect(parsed.learningOutcomes).toEqual([]);
+  });
+
+  test("rejects missing required fields", () => {
+    const { code: _code, ...rest } = valid;
+    expect(courseMetaSchema.safeParse(rest).success).toBe(false);
+  });
+
+  test("rejects unknown fields (strict)", () => {
+    expect(courseMetaSchema.safeParse({ ...valid, startdate: "2026-07-27" }).success).toBe(false);
+  });
+
+  test("rejects non-ISO dates and reversed date ranges", () => {
+    expect(courseMetaSchema.safeParse({ ...valid, startDate: "27 July 2026" }).success).toBe(false);
+    expect(courseMetaSchema.safeParse({ ...valid, startDate: "2026-11-01" }).success).toBe(false);
+  });
+
+  test("courseGraph() fails fast on invalid course metadata", () => {
+    expect(() =>
+      courseGraph({ collections: [{ key: "topics" }], course: { code: "X" } as never }),
+    ).toThrow(/invalid course metadata/);
+    expect(() => courseGraph({ collections: [{ key: "topics" }], course: valid })).not.toThrow();
   });
 });

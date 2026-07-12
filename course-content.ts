@@ -9,7 +9,7 @@ import {
   generateIndexJson,
   generateNodeJson,
 } from "./course-graph.js";
-import type { ContentNode, ExternalLink, ResolvedGraph } from "./course-graph.js";
+import type { ContentNode, CourseMeta, ExternalLink, ResolvedGraph } from "./course-graph.js";
 
 /**
  * Configuration for a single graph-participating collection. `key` is
@@ -162,6 +162,7 @@ export async function writeCourseApi(
   distPath: string,
   collections: CourseCollection[],
   timezone?: string,
+  course?: CourseMeta,
 ): Promise<CourseApiResult> {
   const nodes = await readCourseNodes(srcDir, collections);
   const graph = resolveGraph(nodes);
@@ -169,7 +170,7 @@ export async function writeCourseApi(
   const apiDir = join(distPath, "api");
   await mkdir(apiDir, { recursive: true });
 
-  await writeFile(join(apiDir, "index.json"), generateIndexJson(graph, timezone));
+  await writeFile(join(apiDir, "index.json"), generateIndexJson(graph, timezone, course));
   let filesWritten = 1;
 
   const related = symmetriseRelated(graph);

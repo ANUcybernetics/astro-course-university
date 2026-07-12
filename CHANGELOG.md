@@ -3,6 +3,20 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-12 — course metadata block
+
+`courseGraph()` accepts an optional `course` — the course-record facts every
+course site restates: `code`, `title`, `session`, teaching `startDate`/`endDate`
+(bare ISO `YYYY-MM-DD` strings, local to `timezone`), a one-paragraph
+`description`, and optional `learningOutcomes`. Validated at config time by the
+new `courseMetaSchema` (exported from the package root, alongside the
+`CourseMeta`/`CourseMetaInput` types); the schema is strict, so a typo'd field
+name fails the build — the template contract for spinning up new course sites
+with the same shape. When set, it is emitted as a `course` block at the top of
+`/api/index.json`, making the graph API self-describing; per-node JSON is
+unchanged. `writeCourseApi` and `generateIndexJson` gain a matching optional
+trailing parameter. Omitted, nothing changes.
+
 ## 2026-07-12 — spec: the deliverable's contract as plain sentences
 
 `courseNodeSchema` gains a `spec` field (array of strings, defaults to empty):

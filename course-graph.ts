@@ -3,6 +3,24 @@ export interface ExternalLink {
   url: string;
 }
 
+/**
+ * Course-level metadata: the facts about the course as a whole that the
+ * ANU course record states and every course site restates — emitted as a
+ * `course` block on `/api/index.json` so the graph API is self-describing.
+ * Dates are bare ISO `YYYY-MM-DD` strings, interpreted in the site
+ * `timezone` like every other frontmatter date (never rewritten to UTC
+ * offsets). Validated by `courseMetaSchema` at config time.
+ */
+export interface CourseMeta {
+  code: string;
+  title: string;
+  session: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  learningOutcomes: string[];
+}
+
 export interface ContentNode {
   id: string;
   type: string;
@@ -130,7 +148,11 @@ export function symmetriseRelated(graph: ResolvedGraph): Map<string, string[]> {
   return related;
 }
 
-export function generateIndexJson(graph: ResolvedGraph, timezone?: string): string {
+export function generateIndexJson(
+  graph: ResolvedGraph,
+  timezone?: string,
+  course?: CourseMeta,
+): string {
   const related = symmetriseRelated(graph);
   const entries: IndexEntry[] = graph.nodes.map((node) => ({
     id: node.id,
@@ -144,7 +166,12 @@ export function generateIndexJson(graph: ResolvedGraph, timezone?: string): stri
   }));
 
   return JSON.stringify(
-    { ...(timezone && { timezone }), nodes: entries, edges: graph.edges },
+    {
+      ...(course && { course }),
+      ...(timezone && { timezone }),
+      nodes: entries,
+      edges: graph.edges,
+    },
     null,
     2,
   );

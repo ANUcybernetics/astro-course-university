@@ -1,6 +1,7 @@
 export { default as courseGraph } from "./course-graph-integration.js";
 export { default } from "./course-graph-integration.js";
-export type { CourseGraphOptions } from "./course-graph-integration.js";
+export { courseMetaSchema } from "./course-graph-integration.js";
+export type { CourseGraphOptions, CourseMetaInput } from "./course-graph-integration.js";
 
 export {
   resolveEdgeTarget,
@@ -12,6 +13,7 @@ export {
 } from "./course-graph.js";
 export type {
   ContentNode,
+  CourseMeta,
   ExternalLink,
   GraphEdge,
   GraphError,

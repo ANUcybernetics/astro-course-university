@@ -41,6 +41,17 @@ export default defineConfig({
       ],
       // optional: IANA zone the site's bare frontmatter dates are local to
       timezone: "Australia/Canberra",
+      // optional: course-record facts, emitted as a `course` block on
+      // /api/index.json (validated at config time by courseMetaSchema)
+      course: {
+        code: "COMP1234",
+        title: "Example Course",
+        session: "Semester 2, 2026",
+        startDate: "2026-07-27",
+        endDate: "2026-10-30",
+        description: "A one-paragraph description of the course.",
+        learningOutcomes: ["explain examples", "produce examples"],
+      },
     }),
   ],
 });
@@ -103,6 +114,16 @@ per-node JSON, so consumers can interpret bare frontmatter dates like
 UTC offsets — a zone _name_ stays correct across DST transitions where a baked
 offset would not.
 
+If the integration is given a `course` (validated at config time by
+`courseMetaSchema`, exported from the package root), it is emitted as a `course`
+block at the top of `/api/index.json`, making the API self-describing: `code`,
+`title`, `session`, teaching `startDate`/`endDate` (bare ISO `YYYY-MM-DD`
+strings, local to `timezone` like every other date), a one-paragraph
+`description`, and optional `learningOutcomes`. The schema is strict — an
+unknown field name fails the build — which is the template contract: a new
+course site built from an existing one won't build until the required facts are
+filled in.
+
 ## Refs
 
 One address format — the **ref**, `<collection>/<slug>` — names a node
@@ -153,10 +174,11 @@ defaults to "The spec".
 ## Entry points
 
 - `astro-course-anu` — default export is `courseGraph(options)`; named exports
-  for `readCourseNodes`, `writeCourseApi`, `resolveGraph`, `parseEmbedRefs`,
-  `generateIndexJson`, `generateNodeJson`, plus the types `ContentNode`,
-  `ExternalLink`, `GraphEdge`, `GraphError`, `ResolvedGraph`,
-  `CourseCollection`, `CourseGraphOptions`, `CourseApiResult`
+  for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`, `resolveGraph`,
+  `parseEmbedRefs`, `generateIndexJson`, `generateNodeJson`, plus the types
+  `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`, `GraphEdge`,
+  `GraphError`, `ResolvedGraph`, `CourseCollection`, `CourseGraphOptions`,
+  `CourseApiResult`
 - `astro-course-anu/schemas` — `courseNodeSchema` (the bare graph-node Zod shape
   that consumers extend), plus `defineNewsCollection` and
   `definePeopleCollection`

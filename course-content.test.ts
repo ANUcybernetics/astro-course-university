@@ -566,6 +566,34 @@ describe("writeCourseApi", () => {
     expect(nodeJson.meta.due).toBe("2026-08-17");
   });
 
+  fsTest("threads course metadata into index.json only", async ({ tmpDir }) => {
+    const srcDir = join(tmpDir, "src");
+    const distDir = join(tmpDir, "dist");
+    await mkdir(distDir, { recursive: true });
+
+    await writeMockCourse(srcDir, [
+      { collection: "topics", slug: "variables", frontmatter: "title: Variables" },
+    ]);
+
+    const course = {
+      code: "COMP1234",
+      title: "Example Course",
+      session: "Semester 2, 2026",
+      startDate: "2026-07-27",
+      endDate: "2026-10-30",
+      description: "A course about examples.",
+      learningOutcomes: ["explain examples"],
+    };
+    await writeCourseApi(srcDir, distDir, DEFAULT_COLLECTIONS, undefined, course);
+    const index = JSON.parse(await readFile(join(distDir, "api", "index.json"), "utf-8"));
+    const nodeJson = JSON.parse(
+      await readFile(join(distDir, "api", "topics", "variables.json"), "utf-8"),
+    );
+
+    expect(index.course).toEqual(course);
+    expect(nodeJson).not.toHaveProperty("course");
+  });
+
   fsTest("writes valid index.json for empty course", async ({ tmpDir }) => {
     const srcDir = join(tmpDir, "src");
     const distDir = join(tmpDir, "dist");
