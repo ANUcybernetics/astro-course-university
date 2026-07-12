@@ -12,6 +12,14 @@ export interface ContentNode {
   tags: string[];
   related: string[];
   links: ExternalLink[];
+  /**
+   * The deliverable's contract, as plain sentences: what the markers
+   * will be considering when judging whether submitted work matches
+   * what was required. Some lines may be machine-checkable, many need
+   * human judgement — never an input to automatic grading. Empty for
+   * nodes that don't get a mark.
+   */
+  spec: string[];
   meta: Record<string, unknown>;
   body: string;
 }
@@ -103,6 +111,7 @@ interface IndexEntry {
   description?: string;
   tags: string[];
   related: string[];
+  spec?: string[];
   meta?: Record<string, unknown>;
 }
 
@@ -130,6 +139,7 @@ export function generateIndexJson(graph: ResolvedGraph, timezone?: string): stri
     ...(node.description && { description: node.description }),
     tags: node.tags,
     related: related.get(node.id) ?? node.related,
+    ...(node.spec.length > 0 && { spec: node.spec }),
     ...(Object.keys(node.meta).length > 0 && { meta: node.meta }),
   }));
 
@@ -154,6 +164,7 @@ export function generateNodeJson(
       tags: node.tags,
       related,
       links: node.links,
+      ...(node.spec.length > 0 && { spec: node.spec }),
       meta: node.meta,
       ...(timezone && { timezone }),
       body: node.body,

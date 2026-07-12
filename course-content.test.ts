@@ -82,6 +82,26 @@ describe("readCourseNodes", () => {
     expect(nodes[0].meta).toMatchObject({ weight: 25, week: 3 });
   });
 
+  fsTest("plucks spec into its own field, not meta", async ({ tmpDir }) => {
+    await writeMockCourse(tmpDir, [
+      {
+        collection: "assessments",
+        slug: "a1",
+        frontmatter:
+          "title: A1\nweek: 3\nspec:\n  - deployed and live by the cutoff\n  - recognisably a blog",
+      },
+      { collection: "topics", slug: "no-spec", frontmatter: "title: No spec" },
+    ]);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
+
+    const a1 = nodes.find((n) => n.id === "assessments/a1");
+    expect(a1?.spec).toEqual(["deployed and live by the cutoff", "recognisably a blog"]);
+    expect(a1?.meta).not.toHaveProperty("spec");
+
+    const topic = nodes.find((n) => n.id === "topics/no-spec");
+    expect(topic?.spec).toEqual([]);
+  });
+
   fsTest("parses related edges with bare slugs", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       {

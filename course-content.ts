@@ -128,6 +128,7 @@ export async function readCourseNodes(
         tags: _tags,
         related: _rel,
         links: _links,
+        spec: _spec,
         published: _p,
         ...rest
       } = fm;
@@ -141,6 +142,7 @@ export async function readCourseNodes(
         tags: toStringArray(fm.tags),
         related,
         links: toExternalLinks(fm.links),
+        spec: toStringArray(fm.spec),
         meta: rest,
         body,
       });

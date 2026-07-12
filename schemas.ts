@@ -50,6 +50,15 @@ function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passt
  * same-collection slug), and `links` carries external URLs (rendered
  * alongside related content but never graph edges).
  *
+ * `spec` is the deliverable's contract, as plain sentences: what the
+ * markers will be considering when they judge whether submitted work
+ * matches what was required. Some lines may be machine-checkable (a
+ * starter repo's conformance suite can assert them), many need human
+ * judgement — it is never an input to automatic grading. Declare it on
+ * anything that gets a mark (crits, assessments, labs); leave it empty
+ * elsewhere. It flows through the JSON API as a top-level `spec` field
+ * and renders via the `SpecList` component.
+ *
  * `published` and `draft` are two orthogonal axes, not one lifecycle.
  * `published: false` is visibility: it keeps the node out of the graph,
  * listings, and llms.txt entirely (the page still builds at its URL).
@@ -64,6 +73,7 @@ export const courseNodeSchema = z.object({
   tags: z.array(z.string()).default([]),
   related: z.array(z.string()).default([]),
   links: z.array(z.object({ label: z.string(), url: z.url() })).default([]),
+  spec: z.array(z.string()).default([]),
   published: z.coerce.boolean().default(true),
   draft: z.coerce.boolean().default(false),
 });

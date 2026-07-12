@@ -17,6 +17,7 @@ function node(overrides: Partial<ContentNode> & { id: string; title: string }): 
     tags: [],
     related: [],
     links: [],
+    spec: [],
     meta: {},
     body: "",
     ...overrides,
@@ -245,6 +246,20 @@ describe("generateIndexJson", () => {
     const a = json.nodes.find((n: { id: string }) => n.id === "topic/a");
     expect(a).not.toHaveProperty("meta");
   });
+
+  test("includes spec when present and omits it when empty", () => {
+    const nodes = [
+      node({ id: "crits/week-2", title: "W2", spec: ["deployed and live by the cutoff"] }),
+      node({ id: "topics/a", title: "A" }),
+    ];
+    const json = JSON.parse(generateIndexJson(resolveGraph(nodes)));
+
+    const crit = json.nodes.find((n: { id: string }) => n.id === "crits/week-2");
+    expect(crit.spec).toEqual(["deployed and live by the cutoff"]);
+
+    const a = json.nodes.find((n: { id: string }) => n.id === "topics/a");
+    expect(a).not.toHaveProperty("spec");
+  });
 });
 
 describe("generateNodeJson", () => {
@@ -270,6 +285,7 @@ describe("generateNodeJson", () => {
       tags: ["concept"],
       related: ["topics/functions"],
       links: [{ label: "MDN", url: "https://developer.mozilla.org" }],
+      spec: [],
       meta: { references: ["https://example.com"] },
       body: "# Variables\n\nContent here.",
     });
@@ -282,6 +298,17 @@ describe("generateNodeJson", () => {
     expect(json.related).toEqual(["topics/functions"]);
     expect(json.links).toEqual([{ label: "MDN", url: "https://developer.mozilla.org" }]);
     expect(json.meta.references).toEqual(["https://example.com"]);
+    expect(json).not.toHaveProperty("spec");
     expect(json.body).toContain("# Variables");
+  });
+
+  test("includes spec when the node declares one", () => {
+    const n = node({
+      id: "crits/week-2",
+      title: "W2",
+      spec: ["deployed and live by the cutoff", "recognisably a blog"],
+    });
+    const json = JSON.parse(generateNodeJson(n));
+    expect(json.spec).toEqual(["deployed and live by the cutoff", "recognisably a blog"]);
   });
 });

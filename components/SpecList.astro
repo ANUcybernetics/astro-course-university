@@ -1,0 +1,38 @@
+---
+/**
+ * Renders a deliverable's `spec:` frontmatter — the plain-sentence
+ * contract lines the markers consider when judging whether submitted
+ * work matches what was required. Not a rubric and not an auto-grading
+ * input: some lines may be machine-checkable, many need human
+ * judgement. Renders nothing when the entry declares no spec.
+ *
+ * The preamble sentence is a slot with a course-neutral default —
+ * override it if your course words the contract differently.
+ */
+interface Props {
+  spec: string[] | null | undefined;
+  heading?: string;
+}
+
+const { spec, heading = "The spec" } = Astro.props;
+---
+
+{
+  spec && spec.length > 0 && (
+    <section class="spec-list" aria-label={heading}>
+      <h2>{heading}</h2>
+      <p>
+        <slot>
+          What the markers will be considering when they judge whether the
+          submitted work matches what was required. Some of these can be
+          checked mechanically; the rest call for human judgement.
+        </slot>
+      </p>
+      <ul>
+        {spec.map((line) => (
+          <li>{line}</li>
+        ))}
+      </ul>
+    </section>
+  )
+}

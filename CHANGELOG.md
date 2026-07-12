@@ -3,6 +3,25 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-12 — spec: the deliverable's contract as plain sentences
+
+`courseNodeSchema` gains a `spec` field (array of strings, defaults to empty):
+what the markers will be considering when they judge whether submitted work
+matches what was required. Some lines may be machine-checkable, many need human
+judgement — never an input to automatic grading. Declare it on anything that
+gets a mark.
+
+`readCourseNodes` plucks `spec` out of frontmatter into its own field on
+`ContentNode` (it no longer lands in `meta`), and the JSON API emits it as a
+top-level `spec` on index entries and per-node JSON, omitted when empty. New
+`SpecList.astro` component renders the lines on detail pages (nothing when
+empty; preamble is a slot with a course-neutral default). Extracted from
+comp4020-agentic-coding-studio, where the field was piloted consumer-side.
+
+TypeScript note: `ContentNode` gains a required `spec: string[]` — code
+constructing nodes by hand needs the extra field; content and config need
+nothing.
+
 ## 2026-07-11 — site timezone in the API
 
 `courseGraph()` accepts an optional `timezone` (IANA zone name, e.g.

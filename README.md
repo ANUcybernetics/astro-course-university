@@ -89,7 +89,8 @@ export const collections = {
 At build time, `courseGraph()` walks the configured directories, validates the
 graph, and emits a static JSON API at `/api/index.json` +
 `/api/<collection>/<slug>.json` for each node. Index entries carry
-`{id, type, title, description, tags, related, meta}` (`meta` is the node's
+`{id, type, title, description, tags, related, spec, meta}` (`spec` is the
+deliverable's contract — see below — omitted when empty; `meta` is the node's
 leftover frontmatter — `week`, `due`, `draft`, and so on — omitted when empty);
 per-node JSON adds `links` and the full markdown `body`. A node's `related` list
 includes incoming edges as well as declared ones, matching what `RelatedContent`
@@ -125,6 +126,30 @@ External URLs live in the separate **`links:`** frontmatter field
 (`{ label, url }` pairs) — rendered alongside related content and exposed in the
 API, but never graph edges.
 
+## Specs
+
+Anything that gets a mark (an assignment, a weekly lab or crit) can declare a
+**`spec:`** — an array of plain sentences articulating what the markers will be
+considering when they judge whether the submitted work matches what was
+required. Some lines may be machine-checkable (a starter repo's conformance
+suite can assert them); many need human judgement. It is deliberately _not_ an
+input to automatic grading — it articulates the contract, it doesn't score it.
+
+The field is part of `courseNodeSchema`, flows through the JSON API as a
+top-level `spec` field on index entries and per-node JSON (omitted when empty),
+and renders on detail pages via the `SpecList` component:
+
+```astro
+---
+import SpecList from "astro-course-anu/components/SpecList.astro";
+---
+
+<SpecList spec={entry.data.spec} />
+```
+
+The preamble sentence is a slot with a course-neutral default; the heading
+defaults to "The spec".
+
 ## Entry points
 
 - `astro-course-anu` — default export is `courseGraph(options)`; named exports
@@ -142,6 +167,9 @@ API, but never graph edges.
 - `astro-course-anu/components/RelatedContent.astro` — drop-in related-content
   block for detail pages: internal related entries plus external `links`,
   rendering nothing when the node has neither
+- `astro-course-anu/components/SpecList.astro` — drop-in spec block for detail
+  pages: the deliverable's `spec:` lines as a list, rendering nothing when the
+  entry declares none
 
 ## Lecture decks
 

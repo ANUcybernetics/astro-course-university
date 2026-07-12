@@ -63,6 +63,19 @@ describe("courseNodeSchema", () => {
     expect(parsed.links).toEqual([]);
   });
 
+  test("spec parses as an array of strings and defaults to empty", () => {
+    const parsed = courseNodeSchema.parse({
+      title: "x",
+      spec: ["deployed and live by the cutoff"],
+    });
+    expect(parsed.spec).toEqual(["deployed and live by the cutoff"]);
+    expect(courseNodeSchema.parse({ title: "x" }).spec).toEqual([]);
+  });
+
+  test("rejects a non-array spec", () => {
+    expect(() => courseNodeSchema.parse({ title: "x", spec: "one big string" })).toThrow();
+  });
+
   test("rejects links without a label", () => {
     expect(() =>
       courseNodeSchema.parse({ title: "x", links: [{ url: "https://example.com" }] }),
