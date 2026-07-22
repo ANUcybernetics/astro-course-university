@@ -8,6 +8,10 @@ import { resolveEdgeTarget, parseEmbedRefs } from "./course-graph.js";
  * `astro-course-anu/schemas` all default `published` to `true`, so any
  * entry that has been explicitly marked unpublished is excluded.
  *
+ * The filter only applies to production builds: the dev server includes
+ * unpublished entries so work-in-progress content stays previewable
+ * locally, matching astromotion's treatment of unpublished decks.
+ *
  * Accepts an optional secondary filter with the same signature as the
  * second argument to `getCollection`, applied after the published check.
  *
@@ -32,7 +36,7 @@ export async function getPublishedCollection<C extends CollectionKey>(
 ): Promise<CollectionEntry<C>[]> {
   return getCollection(collection, (entry) => {
     const data = entry.data as { published?: boolean };
-    if (data.published === false) return false;
+    if (import.meta.env.PROD && data.published === false) return false;
     return filter ? filter(entry) : true;
   });
 }
@@ -56,7 +60,9 @@ function refsOf(entry: GraphEntry): string[] {
 
 /**
  * Render-time counterpart of the build-time graph: every published node
- * connected to `entry`, in either direction. `related` is undirected —
+ * connected to `entry`, in either direction (in dev, unpublished nodes
+ * are included too, mirroring `getPublishedCollection`). `related` is
+ * undirected —
  * declare (or embed) on whichever side is convenient and both pages
  * show the connection. Outgoing refs come first, in declaration order
  * (embeds after declared `related`), then incoming.
@@ -74,7 +80,7 @@ export async function getRelatedEntries(
   for (const collection of collections) {
     for (const e of await getCollection(collection as CollectionKey)) {
       const candidate = e as unknown as GraphEntry;
-      if (candidate.data.published === false) continue;
+      if (import.meta.env.PROD && candidate.data.published === false) continue;
       pool.set(`${collection}/${candidate.id}`, candidate);
     }
   }

@@ -3,6 +3,15 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## 2026-07-22 — dev server previews unpublished entries
+
+`getPublishedCollection` and `getRelatedEntries` now apply the
+`published: false` filter only in production builds (`import.meta.env.PROD`).
+The dev server includes unpublished entries — they appear in listings, related
+blocks, and detail routes locally — matching astromotion's existing treatment of
+unpublished decks, so a whole staged-but-unpublished term is previewable with
+`astro dev` while production output is unchanged.
+
 ## 2026-07-12 — course metadata block
 
 `courseGraph()` accepts an optional `course` — the course-record facts every

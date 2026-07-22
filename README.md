@@ -185,7 +185,8 @@ defaults to "The spec".
 - `astro-course-anu/content` — `getPublishedCollection(name, filter?)` and
   `getRelatedEntries(entry, collections)` (the render-time counterpart of the
   build-time graph: every published entry connected to `entry` in either
-  direction)
+  direction). Both filter `published: false` entries in production builds only —
+  the dev server includes them so staged content stays previewable
 - `astro-course-anu/components/RelatedContent.astro` — drop-in related-content
   block for detail pages: internal related entries plus external `links`,
   rendering nothing when the node has neither
