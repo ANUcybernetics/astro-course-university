@@ -1,6 +1,6 @@
 {
   "name": "astro-course-anu",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Companion to astro-theme-anu for ANU course sites — build-time content-graph integration (`courseGraph()`), reusable Zod schemas (`courseNodeSchema`, news, people), and a `getPublishedCollection` helper.",
   "keywords": [
     "anu",
