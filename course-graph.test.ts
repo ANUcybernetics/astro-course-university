@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
-  resolveEdgeTarget,
-  parseEmbedRefs,
-  resolveGraph,
-  symmetriseRelated,
   generateIndexJson,
   generateNodeJson,
+  parseEmbedRefs,
+  resolveEdgeTarget,
+  resolveGraph,
+  symmetriseRelated,
 } from "./course-graph.js";
 import type { ContentNode } from "./course-graph.js";
 import courseGraph, { courseMetaSchema } from "./course-graph-integration.js";

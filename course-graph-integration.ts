@@ -75,7 +75,7 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
   }
   if (timezone) {
     try {
-      new Intl.DateTimeFormat("en", { timeZone: timezone });
+      void new Intl.DateTimeFormat("en", { timeZone: timezone });
     } catch {
       throw new Error(
         `courseGraph: invalid timezone "${timezone}" — use an IANA zone name like "Australia/Canberra"`,

@@ -1,13 +1,13 @@
-import { readdir, readFile, mkdir, writeFile } from "node:fs/promises";
-import { join, extname, basename } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { basename, extname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import {
-  resolveEdgeTarget,
-  parseEmbedRefs,
-  resolveGraph,
-  symmetriseRelated,
   generateIndexJson,
   generateNodeJson,
+  parseEmbedRefs,
+  resolveEdgeTarget,
+  resolveGraph,
+  symmetriseRelated,
 } from "./course-graph.js";
 import type { ContentNode, CourseMeta, ExternalLink, ResolvedGraph } from "./course-graph.js";
 

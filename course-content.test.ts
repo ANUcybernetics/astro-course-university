@@ -66,7 +66,7 @@ describe("readCourseNodes", () => {
     const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
     expect(nodes).toHaveLength(3);
 
-    const types = nodes.map((n) => n.type).sort();
+    const types = nodes.map((n) => n.type).toSorted();
     expect(types).toEqual(["assessments", "labs", "topics"]);
   });
 

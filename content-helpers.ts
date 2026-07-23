@@ -1,6 +1,6 @@
 import { getCollection } from "astro:content";
 import type { CollectionEntry, CollectionKey } from "astro:content";
-import { resolveEdgeTarget, parseEmbedRefs } from "./course-graph.js";
+import { parseEmbedRefs, resolveEdgeTarget } from "./course-graph.js";
 
 /**
  * Drop-in replacement for `getCollection` that filters out entries with
