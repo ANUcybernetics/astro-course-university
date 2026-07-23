@@ -11,7 +11,7 @@ vi.mock("astro/loaders", () => ({
 }));
 
 // Imports must come after vi.mock — vitest hoists mocks so this works.
-import { courseNodeSchema, defineNewsCollection, definePeopleCollection } from "./schemas.js";
+import { courseNodeSchema, definePeopleCollection } from "./schemas.js";
 
 type CollectionLike = { schema: unknown };
 
@@ -126,89 +126,6 @@ describe("courseNodeSchema", () => {
       tags: [],
       published: true,
     });
-  });
-});
-
-describe("defineNewsCollection", () => {
-  const schema = resolveSchema(defineNewsCollection());
-
-  test("parses a valid news post with all fields", () => {
-    const parsed = schema.parse({
-      title: "Assignment 1 extended",
-      date: "2026-04-14",
-      author: "ben-swift",
-      description: "Deadline pushed to Friday.",
-      tags: ["announcement"],
-      pinned: true,
-    });
-    expect(parsed).toMatchObject({
-      title: "Assignment 1 extended",
-      author: { collection: "people", id: "ben-swift" },
-      description: "Deadline pushed to Friday.",
-      tags: ["announcement"],
-      pinned: true,
-      published: true, // default
-    });
-    expect(parsed.date).toBeInstanceOf(Date);
-  });
-
-  test("applies defaults for tags, pinned, published", () => {
-    const parsed = schema.parse({
-      title: "Week 5 crit released",
-      date: "2026-04-01",
-      author: "jane-doe",
-    });
-    expect(parsed).toMatchObject({
-      tags: [],
-      pinned: false,
-      published: true,
-    });
-  });
-
-  test("rejects missing title", () => {
-    expect(() => schema.parse({ date: "2026-04-14", author: "ben-swift" })).toThrow();
-  });
-
-  test("rejects missing date", () => {
-    expect(() => schema.parse({ title: "Hi", author: "ben-swift" })).toThrow();
-  });
-
-  test("rejects missing author (required reference)", () => {
-    expect(() => schema.parse({ title: "Hi", date: "2026-04-14" })).toThrow();
-  });
-
-  test("coerces date from string", () => {
-    const parsed = schema.parse({
-      title: "x",
-      date: "2026-04-14",
-      author: "a",
-    });
-    expect(parsed.date.getUTCFullYear()).toBe(2026);
-  });
-
-  test("rejects invalid date string", () => {
-    expect(() => schema.parse({ title: "x", date: "not-a-date", author: "a" })).toThrow();
-  });
-
-  test("passthrough preserves unknown fields", () => {
-    const parsed = schema.parse({
-      title: "x",
-      date: "2026-04-14",
-      author: "a",
-      customField: 42,
-    });
-    expect((parsed as { customField: unknown }).customField).toBe(42);
-  });
-
-  test("passthrough: false strips unknown fields", () => {
-    const strict = resolveSchema(defineNewsCollection({ passthrough: false }));
-    const parsed = strict.parse({
-      title: "x",
-      date: "2026-04-14",
-      author: "a",
-      customField: 42,
-    });
-    expect((parsed as Record<string, unknown>).customField).toBeUndefined();
   });
 });
 

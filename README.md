@@ -4,7 +4,7 @@ Companion package to [`astro-theme-anu`](../astro-theme-anu) for course-site
 authoring.
 
 Provides a typed content-graph layer over your own Astro collections, schemas
-for the `news` and `people` collections (which need package-level wiring around
+for the `people` collection (which need package-level wiring around
 `reference()` and `image()`), and a build-time Astro integration that validates
 the graph and emits a static JSON API.
 
@@ -64,8 +64,7 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import {
   courseNodeSchema,
-  defineNewsCollection,
-  definePeopleCollection,
+    definePeopleCollection,
 } from "astro-course-anu/schemas";
 
 const loader = (dir: string) =>
@@ -92,7 +91,6 @@ export const collections = {
       })
       .passthrough(),
   }),
-  news: defineNewsCollection(),
   people: definePeopleCollection(),
 };
 ```
@@ -180,7 +178,7 @@ defaults to "The spec".
   `GraphError`, `ResolvedGraph`, `CourseCollection`, `CourseGraphOptions`,
   `CourseApiResult`
 - `astro-course-anu/schemas` — `courseNodeSchema` (the bare graph-node Zod shape
-  that consumers extend), plus `defineNewsCollection` and
+  that consumers extend), plus
   `definePeopleCollection`
 - `astro-course-anu/content` — `getPublishedCollection(name, filter?)` and
   `getRelatedEntries(entry, collections)` (the render-time counterpart of the

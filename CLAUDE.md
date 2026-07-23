@@ -2,9 +2,9 @@
 
 A small companion package to `astro-theme-anu` that provides course-site
 authoring primitives: a typed content-graph layer, reusable Zod schemas for the
-`news` and `people` collections, a topic assembler for composing lecture decks
-out of reusable topic chunks, and a build-time Astro integration that validates
-the graph and emits a static JSON API.
+`people` collection, a topic assembler for composing lecture decks out of
+reusable topic chunks, and a build-time Astro integration that validates the
+graph and emits a static JSON API.
 
 The package is theme-agnostic — it handles data and validation, the theme
 handles visual presentation. Consumers of a course site typically install both
@@ -44,7 +44,7 @@ Schemas subpath (`astro-course-anu/schemas`):
   exposed in the API, never graph edges. `published` and `draft` are orthogonal
   axes: `published: false` is visibility (out of graph/listings/llms.txt
   entirely), `draft: true` is finality (visible, but flagged not-yet-final).
-- `defineNewsCollection`, `definePeopleCollection` — the two collections that
+- `definePeopleCollection` — the collection factory that
   genuinely need package-level wiring (`reference("people")` and `image()`
   respectively), so they stay as factories.
 
@@ -108,23 +108,18 @@ The package no longer hardcodes a vocabulary. Consumers pick the collection keys
 that fit their course — the historical `topics` / `labs` / `assessments` shape
 is one configuration among many.
 
-## News and people (non-graph collections)
+## People (non-graph collection)
 
-Two further collections sit alongside the graph collections but are deliberately
+One further collection sits alongside the graph collections but is deliberately
 kept out of the content graph:
 
-- **news** — dated announcements and guest-lecture posts. Required fields:
-  `title`, `date` (coerced), `author` (a `reference("people")`). Optional:
-  `description`, `tags`, `pinned`, `published`. News is ephemeral and
-  chronological, not a reusable pedagogical unit — cross-references from news to
-  other content are plain markdown links, not graph edges.
 - **people** — the cast of the course: convenor, TAs, guest lecturers. `title`
   is the required display name; `affiliation`, `role`
   (`convenor`/`ta`/`guest`/`other`), `email`, `url`, and `photo` (via Astro's
   `image()`) are optional. The markdown body is an optional bio.
 
-Neither collection contributes `ContentNode`s to the graph and neither has a
-`related:` field. The `news.author` reference is a **typed foreign key**
+It contributes no `ContentNode`s to the graph and has no `related:` field. An
+`author` field on another collection referencing it is a **typed foreign key**
 (validated by Astro's `reference()`), not a `related:` edge.
 
 **Reference validation caveat.** Astro's `reference()` emits a build-time
@@ -158,7 +153,6 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import {
   courseNodeSchema,
-  defineNewsCollection,
   definePeopleCollection,
 } from "astro-course-anu/schemas";
 
@@ -186,7 +180,6 @@ export const collections = {
       })
       .passthrough(),
   }),
-  news: defineNewsCollection(),
   people: definePeopleCollection(),
 };
 ```
@@ -199,8 +192,8 @@ Unit tests live next to the sources:
   references, dangling/self-ref detection)
 - `course-content.test.ts` — filesystem reader + end-to-end graph + API writer,
   exercised against an explicit collections config
-- `schemas.test.ts` — `courseNodeSchema` plus the `news` and `people` factories
-  exercised directly (valid frontmatter, defaults, required-field rejection,
+- `schemas.test.ts` — `courseNodeSchema` plus the `people` factory exercised
+  directly (valid frontmatter, defaults, required-field rejection,
   role/email/url validation, passthrough behaviour). Uses a `vi.mock` shim for
   `astro:content` and `astro/loaders` so the schema factories can be invoked
   without an Astro build.

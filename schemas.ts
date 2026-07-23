@@ -79,42 +79,9 @@ export const courseNodeSchema = z.object({
 });
 
 /**
- * `news` collection — dated announcements (class news, guest-lecture
- * posts). Each entry requires a `title`, `date` (coerced), and `author`
- * (a `reference("people")`), so bylines link to a person page and typos
- * in `author:` fail the build.
- *
- * News is deliberately kept out of the content graph in `courseGraph()`:
- * it's ephemeral and chronological, not a reusable pedagogical unit.
- * Cross-references from news to other content are just markdown links.
- *
- * The `reference("people")` wiring is the reason this still ships as a
- * factory rather than as a bare schema like `courseNodeSchema`.
- */
-export function defineNewsCollection(options: DefineCourseCollectionOptions = {}) {
-  const { base = "src/content/news", pattern, passthrough = true } = options;
-  return defineCollection({
-    loader: loader(base, pattern),
-    schema: maybePassthrough(
-      z.object({
-        title: z.string(),
-        date: z.coerce.date(),
-        author: reference("people"),
-        description: z.string().nullish(),
-        tags: z.array(z.string()).default([]),
-        pinned: z.coerce.boolean().default(false),
-        published: z.coerce.boolean().default(true),
-      }),
-      passthrough,
-    ),
-  });
-}
-
-/**
  * `people` collection — the cast of the course: convenor, TAs, guest
- * lecturers, and anyone else who gets a byline. Entries are referenced
- * by `news.author` (and may be referenced by future `author` fields on
- * other collections). The markdown body is an optional bio.
+ * lecturers, and anyone else who gets a byline. Entries may be referenced
+ * by `author` fields on other collections. The markdown body is an optional bio.
  *
  * Photos use Astro's `image()` helper so they go through the image
  * pipeline like every other image in the theme. That `image()` wiring
