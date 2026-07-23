@@ -64,7 +64,7 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import {
   courseNodeSchema,
-    definePeopleCollection,
+  definePeopleCollection,
 } from "astro-course-anu/schemas";
 
 const loader = (dir: string) =>
