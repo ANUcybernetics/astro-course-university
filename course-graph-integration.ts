@@ -93,7 +93,7 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
   }
   if (options.canonicalUrl) {
     try {
-      new URL(options.canonicalUrl);
+      void new URL(options.canonicalUrl);
     } catch {
       throw new Error(`courseGraph: invalid canonicalUrl "${options.canonicalUrl}"`);
     }
