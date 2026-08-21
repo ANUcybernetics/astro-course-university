@@ -19,9 +19,12 @@ export const courseMetaSchema = z
     code: z.string().min(1),
     title: z.string().min(1),
     session: z.string().min(1),
+    year: z.number().int().min(2000).max(2200).optional(),
+    level: z.number().int().min(1).max(9).optional(),
     startDate: z.iso.date(),
     endDate: z.iso.date(),
     description: z.string().min(1),
+    tags: z.array(z.string()).default([]),
     learningOutcomes: z.array(z.string()).default([]),
   })
   .refine((c) => c.startDate <= c.endDate, {
@@ -58,6 +61,12 @@ export interface CourseGraphOptions {
    * self-describing. Omit and the block is absent.
    */
   course?: CourseMetaInput;
+  /**
+   * Public catalogue URL for this course. When supplied it becomes the API's
+   * `canonicalUrl`; otherwise the integration derives that URL from Astro's
+   * `site` and `base`.
+   */
+  canonicalUrl?: string;
 }
 
 export default function courseGraph(options: CourseGraphOptions): AstroIntegration {
@@ -82,13 +91,24 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
       );
     }
   }
+  if (options.canonicalUrl) {
+    try {
+      new URL(options.canonicalUrl);
+    } catch {
+      throw new Error(`courseGraph: invalid canonicalUrl "${options.canonicalUrl}"`);
+    }
+  }
   let srcDir: string;
+  let canonicalUrl = options.canonicalUrl;
 
   return {
     name: "course-graph",
     hooks: {
       "astro:config:setup": ({ config }) => {
         srcDir = fileURLToPath(config.srcDir);
+        if (!canonicalUrl && config.site) {
+          canonicalUrl = new URL(config.base.replace(/^\//, ""), config.site).href;
+        }
       },
       "astro:build:done": async ({ dir, logger }) => {
         let distPath: string;
@@ -105,6 +125,7 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
           collections,
           timezone,
           course,
+          canonicalUrl,
         );
         const errorCount = graph.errors.length;
         if (errorCount > 0) {

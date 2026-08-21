@@ -15,11 +15,17 @@ export interface CourseMeta {
   code: string;
   title: string;
   session: string;
+  year?: number;
+  level?: number;
   startDate: string;
   endDate: string;
   description: string;
+  tags: string[];
   learningOutcomes: string[];
 }
+
+/** Version of the catalogue-facing `/api/index.json` contract. */
+export const COURSE_API_SCHEMA_VERSION = 1;
 
 export interface ContentNode {
   id: string;
@@ -152,6 +158,7 @@ export function generateIndexJson(
   graph: ResolvedGraph,
   timezone?: string,
   course?: CourseMeta,
+  canonicalUrl?: string,
 ): string {
   const related = symmetriseRelated(graph);
   const entries: IndexEntry[] = graph.nodes.map((node) => ({
@@ -167,6 +174,8 @@ export function generateIndexJson(
 
   return JSON.stringify(
     {
+      schemaVersion: COURSE_API_SCHEMA_VERSION,
+      ...(canonicalUrl && { canonicalUrl }),
       ...(course && { course }),
       ...(timezone && { timezone }),
       nodes: entries,

@@ -2,6 +2,7 @@ export { default as courseGraph } from "./course-graph-integration.js";
 export { default } from "./course-graph-integration.js";
 export { courseMetaSchema } from "./course-graph-integration.js";
 export type { CourseGraphOptions, CourseMetaInput } from "./course-graph-integration.js";
+export { COURSE_API_SCHEMA_VERSION } from "./course-graph.js";
 
 export {
   resolveEdgeTarget,

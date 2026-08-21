@@ -47,9 +47,12 @@ export default defineConfig({
         code: "COMP1234",
         title: "Example Course",
         session: "Semester 2, 2026",
+        year: 2026,
+        level: 1,
         startDate: "2026-07-27",
         endDate: "2026-10-30",
         description: "A one-paragraph description of the course.",
+        tags: ["examples", "teaching"],
         learningOutcomes: ["explain examples", "produce examples"],
       },
     }),
@@ -97,7 +100,10 @@ export const collections = {
 
 At build time, `courseGraph()` walks the configured directories, validates the
 graph, and emits a static JSON API at `/api/index.json` +
-`/api/<collection>/<slug>.json` for each node. Index entries carry
+`/api/<collection>/<slug>.json` for each node. The index declares
+`schemaVersion: 1` and a `canonicalUrl`. By default this comes from Astro's
+`site` and deployment base path; pass `canonicalUrl` to `courseGraph()` when a
+stable catalogue URL differs from the source deployment. Index entries carry
 `{id, type, title, description, tags, related, spec, meta}` (`spec` is the
 deliverable's contract — see below — omitted when empty; `meta` is the node's
 leftover frontmatter — `week`, `due`, `draft`, and so on — omitted when empty);
@@ -117,7 +123,8 @@ If the integration is given a `course` (validated at config time by
 block at the top of `/api/index.json`, making the API self-describing: `code`,
 `title`, `session`, teaching `startDate`/`endDate` (bare ISO `YYYY-MM-DD`
 strings, local to `timezone` like every other date), a one-paragraph
-`description`, and optional `learningOutcomes`. The schema is strict — an
+`description`, and optional `year`, numeric `level`, `tags`, and
+`learningOutcomes`. The schema is strict — an
 unknown field name fails the build — which is the template contract: a new
 course site built from an existing one won't build until the required facts are
 filled in.

@@ -3,6 +3,15 @@
 All notable changes to the `astro-course-anu` package. For monorepo-wide history
 see the root `CHANGELOG.md`.
 
+## Unreleased — catalogue-ready course records
+
+`/api/index.json` now declares `schemaVersion: 1` and a canonical URL, derived
+from Astro's deployment by default or set explicitly to a catalogue address. Course
+metadata accepts optional `year`, numeric `level`, and `tags`; tags and learning
+outcomes default to empty arrays. These additions let a catalogue ingest course
+sites without guessing their API shape or deployment address while preserving
+existing course records.
+
 ## 2026-07-22 — dev server previews unpublished entries
 
 `getPublishedCollection` and `getRelatedEntries` now apply the

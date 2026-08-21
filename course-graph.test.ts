@@ -242,10 +242,21 @@ describe("generateIndexJson", () => {
       startDate: "2026-07-27",
       endDate: "2026-10-30",
       description: "A course about examples.",
+      tags: ["examples"],
       learningOutcomes: ["explain examples"],
     };
     expect(JSON.parse(generateIndexJson(graph, undefined, course)).course).toEqual(course);
     expect(JSON.parse(generateIndexJson(graph))).not.toHaveProperty("course");
+  });
+
+  test("versions the catalogue contract and carries the canonical URL", () => {
+    const graph = resolveGraph([]);
+    const json = JSON.parse(
+      generateIndexJson(graph, undefined, undefined, "https://courses.example/SLOP2713/"),
+    );
+    expect(json.schemaVersion).toBe(1);
+    expect(json.canonicalUrl).toBe("https://courses.example/SLOP2713/");
+    expect(JSON.parse(generateIndexJson(graph))).not.toHaveProperty("canonicalUrl");
   });
 
   test("includes meta when present and omits it when empty", () => {
@@ -342,7 +353,24 @@ describe("courseMetaSchema", () => {
   test("parses valid metadata and defaults learningOutcomes to empty", () => {
     const parsed = courseMetaSchema.parse(valid);
     expect(parsed).toMatchObject(valid);
+    expect(parsed.tags).toEqual([]);
     expect(parsed.learningOutcomes).toEqual([]);
+  });
+
+  test("carries optional catalogue metadata", () => {
+    const parsed = courseMetaSchema.parse({
+      ...valid,
+      session: "Semester 2",
+      year: 2026,
+      level: 4,
+      tags: ["design", "computing"],
+    });
+    expect(parsed).toMatchObject({
+      session: "Semester 2",
+      year: 2026,
+      level: 4,
+      tags: ["design", "computing"],
+    });
   });
 
   test("rejects missing required fields", () => {
@@ -364,5 +392,17 @@ describe("courseMetaSchema", () => {
       courseGraph({ collections: [{ key: "topics" }], course: { code: "X" } as never }),
     ).toThrow(/invalid course metadata/);
     expect(() => courseGraph({ collections: [{ key: "topics" }], course: valid })).not.toThrow();
+  });
+
+  test("courseGraph() fails fast on an invalid canonical URL", () => {
+    expect(() =>
+      courseGraph({ collections: [{ key: "topics" }], canonicalUrl: "not a URL" }),
+    ).toThrow(/invalid canonicalUrl/);
+    expect(() =>
+      courseGraph({
+        collections: [{ key: "topics" }],
+        canonicalUrl: "https://courses.example/CODE1234/",
+      }),
+    ).not.toThrow();
   });
 });
