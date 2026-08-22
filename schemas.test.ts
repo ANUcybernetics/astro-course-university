@@ -13,16 +13,16 @@ vi.mock("astro/loaders", () => ({
 // Imports must come after vi.mock — vitest hoists mocks so this works.
 import { courseNodeSchema, definePeopleCollection } from "./schemas.js";
 
-type CollectionLike = { schema: unknown };
+type CollectionLike = { schema?: unknown };
 
 function resolveSchema(
   collection: CollectionLike,
   ctx: { image: () => z.ZodTypeAny } = { image: () => z.any() },
-): z.ZodTypeAny {
+): z.ZodType<Record<string, unknown>> {
   const s = collection.schema;
   return typeof s === "function"
-    ? (s as (c: typeof ctx) => z.ZodTypeAny)(ctx)
-    : (s as z.ZodTypeAny);
+    ? ((s as (c: typeof ctx) => z.ZodTypeAny)(ctx) as z.ZodType<Record<string, unknown>>)
+    : (s as z.ZodType<Record<string, unknown>>);
 }
 
 describe("courseNodeSchema", () => {
@@ -135,17 +135,17 @@ describe("definePeopleCollection", () => {
   test("parses a valid person with all fields", () => {
     const parsed = schema.parse({
       title: "Ben Swift",
-      affiliation: "ANU School of Cybernetics",
+      affiliation: "Example University",
       role: "convenor",
-      email: "ben.swift@anu.edu.au",
+      email: "teacher@example.edu",
       url: "https://benswift.me",
       photo: { src: "/x.avif", width: 100, height: 100, format: "avif" },
     });
     expect(parsed).toMatchObject({
       title: "Ben Swift",
-      affiliation: "ANU School of Cybernetics",
+      affiliation: "Example University",
       role: "convenor",
-      email: "ben.swift@anu.edu.au",
+      email: "teacher@example.edu",
       url: "https://benswift.me",
       published: true,
     });

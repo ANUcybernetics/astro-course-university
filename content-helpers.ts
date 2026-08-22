@@ -5,7 +5,7 @@ import { parseEmbedRefs, resolveEdgeTarget } from "./course-graph.js";
 /**
  * Drop-in replacement for `getCollection` that filters out entries with
  * `published: false`. The three course schemas from
- * `astro-course-anu/schemas` all default `published` to `true`, so any
+ * `astro-course-university/schemas` all default `published` to `true`, so any
  * entry that has been explicitly marked unpublished is excluded.
  *
  * The filter only applies to production builds: the dev server includes
@@ -34,7 +34,7 @@ export async function getPublishedCollection<C extends CollectionKey>(
   collection: C,
   filter?: (entry: CollectionEntry<C>) => boolean,
 ): Promise<CollectionEntry<C>[]> {
-  return getCollection(collection, (entry) => {
+  return getCollection(collection, (entry: CollectionEntry<C>) => {
     const data = entry.data as { published?: boolean };
     if (import.meta.env.PROD && data.published === false) return false;
     return filter ? filter(entry) : true;

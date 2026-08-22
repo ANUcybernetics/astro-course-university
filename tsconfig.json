@@ -1,4 +1,14 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["**/*.ts"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "astro/client"]
+  },
+  "include": ["**/*.ts", "**/*.astro"],
+  "exclude": ["node_modules", "dist"]
 }

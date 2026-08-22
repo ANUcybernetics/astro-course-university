@@ -5,7 +5,7 @@ export interface ExternalLink {
 
 /**
  * Course-level metadata: the facts about the course as a whole that the
- * ANU course record states and every course site restates — emitted as a
+ * course record states and every course site restates — emitted as a
  * `course` block on `/api/index.json` so the graph API is self-describing.
  * Dates are bare ISO `YYYY-MM-DD` strings, interpreted in the site
  * `timezone` like every other frontmatter date (never rewritten to UTC

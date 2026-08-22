@@ -1,7 +1,7 @@
-# astro-course-anu
+# astro-course-university
 
-A small companion package to `astro-theme-anu` that provides course-site
-authoring primitives: a typed content-graph layer, reusable Zod schemas for the
+A small brand-neutral package that provides course-site authoring primitives:
+a typed content-graph layer, reusable Zod schemas for the
 `people` collection, a topic assembler for composing lecture decks out of
 reusable topic chunks, and a build-time Astro integration that validates the
 graph and emits a static JSON API.
@@ -12,7 +12,7 @@ packages.
 
 ## Public API
 
-Root entry (`astro-course-anu`):
+Root entry (`astro-course-university`):
 
 - default export / `courseGraph({ collections })` — Astro integration that reads
   course content at build time, validates the DAG, and writes `/api/index.json`
@@ -34,7 +34,7 @@ Root entry (`astro-course-anu`):
   node's `related` refs so an embed implies an edge
 - `generateIndexJson(graph)` / `generateNodeJson(node)` — JSON serialisers
 
-Schemas subpath (`astro-course-anu/schemas`):
+Schemas subpath (`astro-course-university/schemas`):
 
 - `courseNodeSchema` — bare Zod object covering the graph-participating fields
   (`title`, `description`, `tags`, `related`, `links`, `published`, `draft`).
@@ -48,7 +48,7 @@ Schemas subpath (`astro-course-anu/schemas`):
   genuinely need package-level wiring (`reference("people")` and `image()`
   respectively), so they stay as factories.
 
-Content subpath (`astro-course-anu/content`):
+Content subpath (`astro-course-university/content`):
 
 - `getPublishedCollection(name, filter?)` — drop-in replacement for
   `getCollection` that filters out entries with `published: false`. Accepts an
@@ -60,7 +60,7 @@ Content subpath (`astro-course-anu/content`):
   direction (declared `related`, embed directives, or incoming from other
   nodes). `collections` must list every graph-participating collection key.
 
-Components subpath (`astro-course-anu/components/*`):
+Components subpath (`astro-course-university/components/*`):
 
 - `RelatedContent.astro` — drop-in related-content block for detail pages:
   internal related entries as `/<collection>/<slug>/` links plus external
@@ -133,12 +133,10 @@ contrast, fails the build via Zod validation.
 ```ts
 // astro.config.ts
 import { defineConfig } from "astro/config";
-import anuTheme from "astro-theme-anu";
-import courseGraph from "astro-course-anu";
+import courseGraph from "astro-course-university";
 
 export default defineConfig({
   integrations: [
-    anuTheme(),
     courseGraph({
       collections: [{ key: "topics" }, { key: "labs" }, { key: "assessments" }],
     }),
@@ -154,7 +152,7 @@ import { z } from "astro/zod";
 import {
   courseNodeSchema,
   definePeopleCollection,
-} from "astro-course-anu/schemas";
+} from "astro-course-university/schemas";
 
 const loader = (dir: string) =>
   glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
@@ -205,5 +203,5 @@ Cross-package integration tests live in `tests/` at the repo root:
   dangling `news.author` surfaces Astro's warning, and a missing `author:` field
   fails the build
 
-Run with `pnpm --filter astro-course-anu test` for package tests, or `pnpm test`
+Run with `pnpm --filter astro-course-university test` for package tests, or `pnpm test`
 / `pnpm test:examples` from the repo root for the full suite.

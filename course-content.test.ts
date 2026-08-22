@@ -582,6 +582,7 @@ describe("writeCourseApi", () => {
       startDate: "2026-07-27",
       endDate: "2026-10-30",
       description: "A course about examples.",
+      tags: [],
       learningOutcomes: ["explain examples"],
     };
     await writeCourseApi(srcDir, distDir, DEFAULT_COLLECTIONS, undefined, course);

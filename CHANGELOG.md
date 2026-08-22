@@ -1,7 +1,14 @@
 # Changelog
 
-All notable changes to the `astro-course-anu` package. For monorepo-wide history
-see the root `CHANGELOG.md`.
+All notable changes to the `astro-course-university` package.
+
+## 0.1.0 — 2026-08-22
+
+Initial brand-neutral release, extracted from the mature course-site package
+that previously lived beside one institution's brand layer. The public API is
+unchanged apart from the package import name. Course infrastructure can now be
+shared by independently branded sites without either brand package depending
+on or containing the other.
 
 ## Unreleased — catalogue-ready course records
 
@@ -102,7 +109,7 @@ between the JSON API and the rendered site:
   records declared direction. New `symmetriseRelated(graph)` export;
   `generateNodeJson` takes an optional second `related` argument.
 
-Released as `astro-course-anu@v0.4.1`.
+Released as `astro-course-university@v0.4.1`.
 
 ## 2026-07-03 — Refs everywhere: plural types, embed edges, external links (breaking)
 
@@ -138,7 +145,7 @@ shorthand for "same collection as the declaring node".
 - **`suffix` collection option** (e.g. `".deck.mdx"`) so non-content collections
   like astromotion decks can join the graph:
   `{ key: "lectures", dir: "decks", suffix: ".deck.mdx" }`.
-- **`getRelatedEntries(entry, collections)`** in `astro-course-anu/content` —
+- **`getRelatedEntries(entry, collections)`** in `astro-course-university/content` —
   the render-time counterpart of the build-time graph: every published entry
   connected to `entry` in either direction (declared, embedded, or incoming), so
   `related` is genuinely undirected — declare on whichever side is convenient
@@ -176,7 +183,7 @@ bump and consumers must move to Astro 7 in lockstep.
 
 ## 2026-05-29 — Remove deprecated `topic-assembler`
 
-- Removed the `astro-course-anu/topic-assembler` subpath export and its
+- Removed the `astro-course-university/topic-assembler` subpath export and its
   `assembleTopics` / `parseTopicDirective` helpers (and the `AssembleResult`
   type). They implemented the pre-MDX `<!-- topic: slug -->` `.deck.md`
   preprocessor, which astromotion's `.deck.mdx` `@include` directive superseded;
@@ -237,7 +244,7 @@ collection keys, directories, and singular type names that fit their course.
 `src/content.config.ts`:
 
 ```diff
--import { defineCourseCollections } from "astro-course-anu/schemas";
+-import { defineCourseCollections } from "astro-course-university/schemas";
 -export const collections = defineCourseCollections();
 +import { defineCollection } from "astro:content";
 +import { glob } from "astro/loaders";
@@ -246,7 +253,7 @@ collection keys, directories, and singular type names that fit their course.
 +  courseNodeSchema,
 +  defineNewsCollection,
 +  definePeopleCollection,
-+} from "astro-course-anu/schemas";
++} from "astro-course-university/schemas";
 +
 +const loader = (dir) =>
 +  glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
@@ -304,7 +311,7 @@ is now an honest one-place change: rename the directory, update
 
 ### Add `news` and `people` collections
 
-Two new schema factories in `astro-course-anu/schemas`:
+Two new schema factories in `astro-course-university/schemas`:
 
 - **`defineNewsCollection`** — dated announcements and guest-lecture posts.
   Required fields: `title`, `date` (coerced), and `author` (a
@@ -335,7 +342,7 @@ a bad reference) does fail the build via Zod validation.
 
 ### Add `getPublishedCollection` helper
 
-New `astro-course-anu/content` subpath exports
+New `astro-course-university/content` subpath exports
 `getPublishedCollection(name, filter?)` — a drop-in replacement for
 `getCollection` that filters out entries with `published: false`. An optional
 secondary filter is applied after the published check, so existing call sites
@@ -418,25 +425,24 @@ back into `/topics/<slug>/`. The topic detail pages own the canonical URL.
 
 ## 2026-04-11
 
-### Extract `astro-course-anu` package
+### Extract `astro-course-university` package
 
 The course-authoring machinery (content graph, topic assembler, reusable Zod
 schemas, and the `courseGraph()` build-time integration) has moved out of
-`examples/course-benswift` and into a new `packages/astro-course-anu` workspace
-package. The example is now a thin starter that installs both `astro-theme-anu`
-and `astro-course-anu` — the library code lives in a versioned package with its
-own tests and CLAUDE.md.
+`examples/course-benswift` and into a new `packages/astro-course-university`
+workspace package. The example became a thin starter while the library code
+moved into a versioned package with its own tests and CLAUDE.md.
 
 Package entry points:
 
-- `astro-course-anu` — default export is `courseGraph()`, plus named exports for
+- `astro-course-university` — default export is `courseGraph()`, plus named exports for
   `readCourseNodes`, `resolveGraph`, graph types, etc.
-- `astro-course-anu/schemas` — `defineTopicsCollection`, `defineLabsCollection`,
+- `astro-course-university/schemas` — `defineTopicsCollection`, `defineLabsCollection`,
   `defineAssessmentsCollection`, `defineProceduresCollection`,
   `defineAdminCollection`, and `defineCourseCollections()` which returns all
   five at once so a consumer's `content.config.ts` is a one-liner
-- `astro-course-anu/topic-assembler` — `assembleTopics` markdown transformer
-  (moved from `astro-theme-anu`, which no longer exposes it)
+- `astro-course-university/topic-assembler` — `assembleTopics` markdown transformer
+  (moved from the former theme package, which no longer exposes it)
 
 ## 2026-04-10
 
@@ -468,7 +474,7 @@ as topics: `title`, `summary`, `tags`, `related`, `published`.
 The astromotion deck preprocess hook can splice topic content into lecture decks
 by replacing `<!-- topic: slug -->` HTML comments with the body of the matching
 topic file (stripping its frontmatter). Originally landed in the course-benswift
-template; now exported as `astro-course-anu/topic-assembler`.
+template; now exported as `astro-course-university/topic-assembler`.
 
 ## 2026-04-06
 

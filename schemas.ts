@@ -28,7 +28,7 @@ function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passt
  * ```ts
  * import { defineCollection } from "astro:content";
  * import { glob } from "astro/loaders";
- * import { courseNodeSchema } from "astro-course-anu/schemas";
+ * import { courseNodeSchema } from "astro-course-university/schemas";
  *
  * export const collections = {
  *   crits: defineCollection({

@@ -1,36 +1,34 @@
-# astro-course-anu
+# astro-course-university
 
-Companion package to [`astro-theme-anu`](../astro-theme-anu) for course-site
-authoring.
+Brand-neutral course-site infrastructure for Astro. It deliberately knows
+nothing about a university's visual identity, legal text, logos, or other brand
+assets; pair it with whichever theme and brand layer a site chooses.
 
 Provides a typed content-graph layer over your own Astro collections, schemas
 for the `people` collection (which need package-level wiring around
 `reference()` and `image()`), and a build-time Astro integration that validates
 the graph and emits a static JSON API.
 
-The package is theme-agnostic — it handles data and validation, while
-`astro-theme-anu` handles visual presentation. Consumers of a course site
-typically install both.
+The package is theme-agnostic: it handles data and validation while the
+consumer's chosen theme handles visual presentation.
 
 ## Install
 
 ```sh
-pnpm add astro-course-anu
+pnpm add astro-course-university
 ```
 
-Requires `astro ^6.0.0` as a peer dependency.
+Requires `astro ^7.0.0` as a peer dependency.
 
 ## Minimal consumer config
 
 ```js
 // astro.config.ts
 import { defineConfig } from "astro/config";
-import anuTheme from "astro-theme-anu";
-import courseGraph from "astro-course-anu";
+import courseGraph from "astro-course-university";
 
 export default defineConfig({
   integrations: [
-    anuTheme(),
     courseGraph({
       collections: [
         { key: "topics" },
@@ -68,7 +66,7 @@ import { z } from "astro/zod";
 import {
   courseNodeSchema,
   definePeopleCollection,
-} from "astro-course-anu/schemas";
+} from "astro-course-university/schemas";
 
 const loader = (dir: string) =>
   glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
@@ -167,7 +165,7 @@ and renders on detail pages via the `SpecList` component:
 
 ```astro
 ---
-import SpecList from "astro-course-anu/components/SpecList.astro";
+import SpecList from "astro-course-university/components/SpecList.astro";
 ---
 
 <SpecList spec={entry.data.spec} />
@@ -178,24 +176,24 @@ defaults to "The spec".
 
 ## Entry points
 
-- `astro-course-anu` — default export is `courseGraph(options)`; named exports
+- `astro-course-university` — default export is `courseGraph(options)`; named exports
   for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`, `resolveGraph`,
   `parseEmbedRefs`, `generateIndexJson`, `generateNodeJson`, plus the types
   `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`, `GraphEdge`,
   `GraphError`, `ResolvedGraph`, `CourseCollection`, `CourseGraphOptions`,
   `CourseApiResult`
-- `astro-course-anu/schemas` — `courseNodeSchema` (the bare graph-node Zod shape
+- `astro-course-university/schemas` — `courseNodeSchema` (the bare graph-node Zod shape
   that consumers extend), plus
   `definePeopleCollection`
-- `astro-course-anu/content` — `getPublishedCollection(name, filter?)` and
+- `astro-course-university/content` — `getPublishedCollection(name, filter?)` and
   `getRelatedEntries(entry, collections)` (the render-time counterpart of the
   build-time graph: every published entry connected to `entry` in either
   direction). Both filter `published: false` entries in production builds only —
   the dev server includes them so staged content stays previewable
-- `astro-course-anu/components/RelatedContent.astro` — drop-in related-content
+- `astro-course-university/components/RelatedContent.astro` — drop-in related-content
   block for detail pages: internal related entries plus external `links`,
   rendering nothing when the node has neither
-- `astro-course-anu/components/SpecList.astro` — drop-in spec block for detail
+- `astro-course-university/components/SpecList.astro` — drop-in spec block for detail
   pages: the deliverable's `spec:` lines as a list, rendering nothing when the
   entry declares none
 
