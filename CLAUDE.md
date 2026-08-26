@@ -1,10 +1,10 @@
 # astro-course-university
 
-A small brand-neutral package that provides course-site authoring primitives:
-a typed content-graph layer, reusable Zod schemas for the
-`people` collection, a topic assembler for composing lecture decks out of
-reusable topic chunks, and a build-time Astro integration that validates the
-graph and emits a static JSON API.
+A small brand-neutral package that provides course-site authoring primitives: a
+typed content-graph layer, reusable Zod schemas for the `people` collection, a
+topic assembler for composing lecture decks out of reusable topic chunks, and a
+build-time Astro integration that validates the graph and emits a static JSON
+API.
 
 The package is theme-agnostic — it handles data and validation, the theme
 handles visual presentation. Consumers of a course site typically install both
@@ -44,9 +44,9 @@ Schemas subpath (`astro-course-university/schemas`):
   exposed in the API, never graph edges. `published` and `draft` are orthogonal
   axes: `published: false` is visibility (out of graph/listings/llms.txt
   entirely), `draft: true` is finality (visible, but flagged not-yet-final).
-- `definePeopleCollection` — the collection factory that
-  genuinely need package-level wiring (`reference("people")` and `image()`
-  respectively), so they stay as factories.
+- `definePeopleCollection` — the collection factory that genuinely need
+  package-level wiring (`reference("people")` and `image()` respectively), so
+  they stay as factories.
 
 Content subpath (`astro-course-university/content`):
 
@@ -203,5 +203,5 @@ Cross-package integration tests live in `tests/` at the repo root:
   dangling `news.author` surfaces Astro's warning, and a missing `author:` field
   fails the build
 
-Run with `pnpm --filter astro-course-university test` for package tests, or `pnpm test`
-/ `pnpm test:examples` from the repo root for the full suite.
+Run with `pnpm --filter astro-course-university test` for package tests, or
+`pnpm test` / `pnpm test:examples` from the repo root for the full suite.

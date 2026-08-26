@@ -122,10 +122,9 @@ block at the top of `/api/index.json`, making the API self-describing: `code`,
 `title`, `session`, teaching `startDate`/`endDate` (bare ISO `YYYY-MM-DD`
 strings, local to `timezone` like every other date), a one-paragraph
 `description`, and optional `year`, numeric `level`, `tags`, and
-`learningOutcomes`. The schema is strict — an
-unknown field name fails the build — which is the template contract: a new
-course site built from an existing one won't build until the required facts are
-filled in.
+`learningOutcomes`. The schema is strict — an unknown field name fails the build
+— which is the template contract: a new course site built from an existing one
+won't build until the required facts are filled in.
 
 ## Refs
 
@@ -176,26 +175,25 @@ defaults to "The spec".
 
 ## Entry points
 
-- `astro-course-university` — default export is `courseGraph(options)`; named exports
-  for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`, `resolveGraph`,
-  `parseEmbedRefs`, `generateIndexJson`, `generateNodeJson`, plus the types
-  `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`, `GraphEdge`,
-  `GraphError`, `ResolvedGraph`, `CourseCollection`, `CourseGraphOptions`,
-  `CourseApiResult`
-- `astro-course-university/schemas` — `courseNodeSchema` (the bare graph-node Zod shape
-  that consumers extend), plus
-  `definePeopleCollection`
-- `astro-course-university/content` — `getPublishedCollection(name, filter?)` and
-  `getRelatedEntries(entry, collections)` (the render-time counterpart of the
-  build-time graph: every published entry connected to `entry` in either
+- `astro-course-university` — default export is `courseGraph(options)`; named
+  exports for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`,
+  `resolveGraph`, `parseEmbedRefs`, `generateIndexJson`, `generateNodeJson`,
+  plus the types `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`,
+  `GraphEdge`, `GraphError`, `ResolvedGraph`, `CourseCollection`,
+  `CourseGraphOptions`, `CourseApiResult`
+- `astro-course-university/schemas` — `courseNodeSchema` (the bare graph-node
+  Zod shape that consumers extend), plus `definePeopleCollection`
+- `astro-course-university/content` — `getPublishedCollection(name, filter?)`
+  and `getRelatedEntries(entry, collections)` (the render-time counterpart of
+  the build-time graph: every published entry connected to `entry` in either
   direction). Both filter `published: false` entries in production builds only —
   the dev server includes them so staged content stays previewable
-- `astro-course-university/components/RelatedContent.astro` — drop-in related-content
-  block for detail pages: internal related entries plus external `links`,
-  rendering nothing when the node has neither
-- `astro-course-university/components/SpecList.astro` — drop-in spec block for detail
-  pages: the deliverable's `spec:` lines as a list, rendering nothing when the
-  entry declares none
+- `astro-course-university/components/RelatedContent.astro` — drop-in
+  related-content block for detail pages: internal related entries plus external
+  `links`, rendering nothing when the node has neither
+- `astro-course-university/components/SpecList.astro` — drop-in spec block for
+  detail pages: the deliverable's `spec:` lines as a list, rendering nothing
+  when the entry declares none
 
 ## Lecture decks
 
