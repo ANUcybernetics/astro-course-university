@@ -1,6 +1,6 @@
 {
   "name": "astro-course-university",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Brand-neutral course-site infrastructure for Astro: a content-graph integration, reusable Zod schemas, course API generation, and related-content components.",
   "keywords": [
     "astro-component",
