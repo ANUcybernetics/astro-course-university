@@ -103,7 +103,11 @@ export async function readCourseNodes(
       if (typeof raw !== "object" || raw === null) continue;
 
       const fm = raw as Record<string, unknown>;
-      if (fm.published === false) continue;
+      // Out of the graph on either flag: `published: false` is not on the
+      // site yet, `unlisted: true` is on it but linked from nowhere. A graph
+      // node is a link from every related page and an /api/ entry, which is
+      // exactly what unlisted means to opt out of.
+      if (fm.published === false || fm.unlisted === true) continue;
 
       const title = fm.title;
       if (typeof title !== "string") continue;
@@ -130,6 +134,7 @@ export async function readCourseNodes(
         links: _links,
         spec: _spec,
         published: _p,
+        unlisted: _u,
         ...rest
       } = fm;
 

@@ -2,6 +2,20 @@
 
 All notable changes to the `astro-course-university` package.
 
+## 0.1.1 — 2026-09-03
+
+`courseNodeSchema` gains `unlisted`, a third axis alongside `published` and
+`draft`. `published: false` is a stage — not on the site yet, still previewable
+in dev. `unlisted: true` is a property: the node is live at its URL and stays
+there, but nothing points at it. It comes out of the content graph and the
+`/api/` endpoints, out of `getPublishedCollection` listings, and out of the
+related blocks `getRelatedEntries` builds — in dev as well as production, since
+a listing that showed it locally would be lying about the built site.
+
+The theme's `unlisted` layout prop (noindex + `data-pagefind-ignore`) and
+astromotion's deck flag are the same word for the same thing; the three now
+cover a page, its indexes and its links.
+
 ## 0.1.0 — 2026-08-22
 
 Initial brand-neutral release, extracted from the mature course-site package

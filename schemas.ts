@@ -59,13 +59,19 @@ function maybePassthrough<S extends z.ZodRawShape>(schema: z.ZodObject<S>, passt
  * elsewhere. It flows through the JSON API as a top-level `spec` field
  * and renders via the `SpecList` component.
  *
- * `published` and `draft` are two orthogonal axes, not one lifecycle.
- * `published: false` is visibility: it keeps the node out of the graph,
- * listings, and llms.txt entirely (the page still builds at its URL).
+ * `published`, `unlisted` and `draft` are three orthogonal axes, not one
+ * lifecycle. `published: false` is visibility: it keeps the node out of the
+ * graph, listings, and llms.txt entirely (the page still builds at its URL,
+ * except for astromotion decks, which are dropped from a production build).
+ * `unlisted: true` is reach: the node is live and stays live, but nothing
+ * points at it — out of listings, the graph and llms.txt, and the theme's
+ * layout adds `noindex` and a Pagefind ignore. It is the flag for a page
+ * meant for whoever holds the link and nobody else, and unlike `published`
+ * it is a permanent property rather than a stage, so it applies in dev too.
  * `draft: true` is finality: the node stays visible everywhere but
  * consumers render it with a not-yet-final marker (llms.txt does this
- * automatically). All four combinations are coherent — an unpublished
- * draft is an unlisted preview, reachable by URL, banner intact.
+ * automatically). The combinations are all coherent — an unpublished draft
+ * is a preview reachable by URL, banner intact.
  */
 export const courseNodeSchema = z.object({
   title: z.string(),
@@ -75,6 +81,7 @@ export const courseNodeSchema = z.object({
   links: z.array(z.object({ label: z.string(), url: z.url() })).default([]),
   spec: z.array(z.string()).default([]),
   published: z.coerce.boolean().default(true),
+  unlisted: z.coerce.boolean().default(false),
   draft: z.coerce.boolean().default(false),
 });
 

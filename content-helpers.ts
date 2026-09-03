@@ -3,14 +3,17 @@ import type { CollectionEntry, CollectionKey } from "astro:content";
 import { parseEmbedRefs, resolveEdgeTarget } from "./course-graph.js";
 
 /**
- * Drop-in replacement for `getCollection` that filters out entries with
- * `published: false`. The three course schemas from
- * `astro-course-university/schemas` all default `published` to `true`, so any
- * entry that has been explicitly marked unpublished is excluded.
+ * Drop-in replacement for `getCollection` that returns the entries fit to
+ * list: it drops `published: false` and `unlisted: true`. The course schemas
+ * from `astro-course-university/schemas` default `published` to `true` and
+ * `unlisted` to `false`, so only an explicit opt-out is excluded.
  *
- * The filter only applies to production builds: the dev server includes
- * unpublished entries so work-in-progress content stays previewable
- * locally, matching astromotion's treatment of unpublished decks.
+ * The `published` filter applies to production builds only: the dev server
+ * includes unpublished entries so work-in-progress content stays previewable
+ * locally, matching astromotion's treatment of unpublished decks. `unlisted`
+ * applies everywhere, since it is a permanent property of the entry rather
+ * than a stage it passes through — a listing that showed it in dev would be
+ * lying about what the built site does.
  *
  * Accepts an optional secondary filter with the same signature as the
  * second argument to `getCollection`, applied after the published check.
@@ -27,16 +30,17 @@ import { parseEmbedRefs, resolveEdgeTarget } from "./course-graph.js";
  * );
  * ```
  *
- * Safe to use on collections whose schema does not define `published` —
- * missing fields are treated as published.
+ * Safe to use on collections whose schema defines neither field — missing
+ * fields are treated as published and listed.
  */
 export async function getPublishedCollection<C extends CollectionKey>(
   collection: C,
   filter?: (entry: CollectionEntry<C>) => boolean,
 ): Promise<CollectionEntry<C>[]> {
   return getCollection(collection, (entry: CollectionEntry<C>) => {
-    const data = entry.data as { published?: boolean };
+    const data = entry.data as { published?: boolean; unlisted?: boolean };
     if (import.meta.env.PROD && data.published === false) return false;
+    if (data.unlisted === true) return false;
     return filter ? filter(entry) : true;
   });
 }
@@ -46,7 +50,13 @@ export async function getPublishedCollection<C extends CollectionKey>(
 export interface GraphEntry {
   collection: string;
   id: string;
-  data: { title: string; related?: string[]; published?: boolean; description?: string | null };
+  data: {
+    title: string;
+    related?: string[];
+    published?: boolean;
+    unlisted?: boolean;
+    description?: string | null;
+  };
   body?: string;
 }
 
@@ -59,10 +69,10 @@ function refsOf(entry: GraphEntry): string[] {
 }
 
 /**
- * Render-time counterpart of the build-time graph: every published node
+ * Render-time counterpart of the build-time graph: every listable node
  * connected to `entry`, in either direction (in dev, unpublished nodes
- * are included too, mirroring `getPublishedCollection`). `related` is
- * undirected —
+ * are included too, and unlisted ones never are — mirroring
+ * `getPublishedCollection`). `related` is undirected —
  * declare (or embed) on whichever side is convenient and both pages
  * show the connection. Outgoing refs come first, in declaration order
  * (embeds after declared `related`), then incoming.
@@ -81,6 +91,7 @@ export async function getRelatedEntries(
     for (const e of await getCollection(collection as CollectionKey)) {
       const candidate = e as unknown as GraphEntry;
       if (import.meta.env.PROD && candidate.data.published === false) continue;
+      if (candidate.data.unlisted === true) continue;
       pool.set(`${collection}/${candidate.id}`, candidate);
     }
   }

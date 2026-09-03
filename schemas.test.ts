@@ -33,6 +33,7 @@ describe("courseNodeSchema", () => {
       tags: [],
       related: [],
       published: true,
+      unlisted: false,
       draft: false,
     });
   });
@@ -99,6 +100,11 @@ describe("courseNodeSchema", () => {
   test("respects explicit published: false", () => {
     const parsed = courseNodeSchema.parse({ title: "x", published: false });
     expect(parsed.published).toBe(false);
+  });
+
+  test("respects explicit unlisted: true", () => {
+    const parsed = courseNodeSchema.parse({ title: "x", unlisted: true });
+    expect(parsed.unlisted).toBe(true);
   });
 
   test("does not include week/repo/due/weight (consumer-defined)", () => {

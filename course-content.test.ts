@@ -219,6 +219,16 @@ describe("readCourseNodes", () => {
     expect(nodes[0].title).toBe("Live");
   });
 
+  fsTest("filters out unlisted entries", async ({ tmpDir }) => {
+    await writeMockCourse(tmpDir, [
+      { collection: "topics", slug: "hidden", frontmatter: "title: Hidden\nunlisted: true" },
+      { collection: "topics", slug: "listed", frontmatter: "title: Listed" },
+    ]);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].title).toBe("Listed");
+  });
+
   fsTest("skips files without title", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       { collection: "topics", slug: "notitle", frontmatter: "summary: No title here" },

@@ -185,9 +185,11 @@ defaults to "The spec".
   Zod shape that consumers extend), plus `definePeopleCollection`
 - `astro-course-university/content` — `getPublishedCollection(name, filter?)`
   and `getRelatedEntries(entry, collections)` (the render-time counterpart of
-  the build-time graph: every published entry connected to `entry` in either
+  the build-time graph: every listable entry connected to `entry` in either
   direction). Both filter `published: false` entries in production builds only —
-  the dev server includes them so staged content stays previewable
+  the dev server includes them so staged content stays previewable — and
+  `unlisted: true` entries everywhere, that flag being a permanent property of
+  the entry rather than a stage
 - `astro-course-university/components/RelatedContent.astro` — drop-in
   related-content block for detail pages: internal related entries plus external
   `links`, rendering nothing when the node has neither

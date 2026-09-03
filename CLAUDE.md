@@ -37,13 +37,16 @@ Root entry (`astro-course-university`):
 Schemas subpath (`astro-course-university/schemas`):
 
 - `courseNodeSchema` — bare Zod object covering the graph-participating fields
-  (`title`, `description`, `tags`, `related`, `links`, `published`, `draft`).
-  Consumers compose collections by `extend`ing this with type-specific fields
-  and passing the result to `defineCollection` themselves. `links` is external
-  URLs as `{ label, url }` pairs — rendered alongside related content and
-  exposed in the API, never graph edges. `published` and `draft` are orthogonal
-  axes: `published: false` is visibility (out of graph/listings/llms.txt
-  entirely), `draft: true` is finality (visible, but flagged not-yet-final).
+  (`title`, `description`, `tags`, `related`, `links`, `published`, `unlisted`,
+  `draft`). Consumers compose collections by `extend`ing this with type-specific
+  fields and passing the result to `defineCollection` themselves. `links` is
+  external URLs as `{ label, url }` pairs — rendered alongside related content
+  and exposed in the API, never graph edges. `published`, `unlisted` and `draft`
+  are orthogonal axes: `published: false` is visibility (out of
+  graph/listings/llms.txt entirely, and staged — dev still shows it),
+  `unlisted: true` is reach (live at its URL but linked from nowhere, in dev as
+  in production), `draft: true` is finality (visible, but flagged
+  not-yet-final).
 - `definePeopleCollection` — the collection factory that genuinely need
   package-level wiring (`reference("people")` and `image()` respectively), so
   they stay as factories.
@@ -51,12 +54,12 @@ Schemas subpath (`astro-course-university/schemas`):
 Content subpath (`astro-course-university/content`):
 
 - `getPublishedCollection(name, filter?)` — drop-in replacement for
-  `getCollection` that filters out entries with `published: false`. Accepts an
-  optional secondary filter applied after the published check. Safe on
-  collections whose schema doesn't define `published` — missing fields are
-  treated as published.
+  `getCollection` returning the entries fit to list: it drops `published: false`
+  (production only) and `unlisted: true` (always). Accepts an optional secondary
+  filter applied after those checks. Safe on collections whose schema defines
+  neither field — missing fields are treated as published and listed.
 - `getRelatedEntries(entry, collections)` — render-time counterpart of the
-  build-time graph: every published entry connected to `entry` in either
+  build-time graph: every listable entry connected to `entry` in either
   direction (declared `related`, embed directives, or incoming from other
   nodes). `collections` must list every graph-participating collection key.
 
