@@ -34,7 +34,7 @@ fi
 
 echo "astro-course-university: $old -> $new (tag: $tag)"
 git add package.json
-git commit -m "chore(release): astro-course-university $tag"
+git commit -m "release: astro-course-university $tag"
 
 msg="astro-course-university $new"
 [[ -n "$reason" ]] && msg="$msg"$'\n\n'"$reason"
