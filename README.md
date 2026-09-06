@@ -4,10 +4,10 @@ Brand-neutral course-site infrastructure for Astro. It deliberately knows
 nothing about a university's visual identity, legal text, logos, or other brand
 assets; pair it with whichever theme and brand layer a site chooses.
 
-Provides a typed content-graph layer over your own Astro collections, schemas
-for the `people` collection (which need package-level wiring around
-`reference()` and `image()`), and a build-time Astro integration that validates
-the graph and emits a static JSON API.
+Provides a typed content-graph layer over your own Astro collections, a `people`
+collection schema (built through `definePeopleCollection` so it can use your
+site's `image()` helper), and a build-time Astro integration that validates the
+graph and emits a static JSON API.
 
 The package is theme-agnostic: it handles data and validation while the
 consumer's chosen theme handles visual presentation.
@@ -177,8 +177,9 @@ defaults to "The spec".
 
 - `astro-course-university` — default export is `courseGraph(options)`; named
   exports for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`,
-  `resolveGraph`, `parseEmbedRefs`, `generateIndexJson`, `generateNodeJson`,
-  plus the types `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`,
+  `resolveGraph`, `resolveEdgeTarget`, `symmetriseRelated`, `parseEmbedRefs`,
+  `generateIndexJson`, `generateNodeJson`, `COURSE_API_SCHEMA_VERSION`, plus the
+  types `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`,
   `GraphEdge`, `GraphError`, `ResolvedGraph`, `CourseCollection`,
   `CourseGraphOptions`, `CourseApiResult`
 - `astro-course-university/schemas` — `courseNodeSchema` (the bare graph-node
