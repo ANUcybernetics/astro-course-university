@@ -1,210 +1,59 @@
 # astro-course-university
 
-A small brand-neutral package that provides course-site authoring primitives: a
-typed content-graph layer, reusable Zod schemas for the `people` collection, a
-topic assembler for composing lecture decks out of reusable topic chunks, and a
-build-time Astro integration that validates the graph and emits a static JSON
-API.
+A brand-neutral package of course-site authoring primitives: a typed
+content-graph layer over the consumer's own Astro collections, reusable Zod
+schemas, and a build-time integration that validates the graph and emits a
+static JSON API. Data and validation live here; visual presentation lives in the
+theme package, and a site typically installs both.
 
-The package is theme-agnostic — it handles data and validation, the theme
-handles visual presentation. Consumers of a course site typically install both
-packages.
+Keep the package free of institutional branding --- no university name, logos,
+colours, legal or acknowledgement text, and no institution-specific defaults.
+Examples use invented institutions and course codes. Brand assets belong in a
+consumer's own brand layer.
 
-## Public API
+`README.md` is the API reference: entry points, `courseGraph()` options
+(`collections`, `timezone`, `course`, `canonicalUrl`), refs, specs and deck
+embeds. Point at it rather than restating it here, and update it whenever the
+public surface changes. Per-symbol contracts --- including the
+`published`/`unlisted`/`draft` axes and `spec` --- live in the JSDoc on
+`schemas.ts` and `course-graph.ts`.
 
-Root entry (`astro-course-university`):
+Sources sit flat at the repo root, with `.astro` components in `components/`.
+The `exports` map in `package.json` is the list of public entry points; a new
+public module needs an entry there and in `files`, or it won't ship.
 
-- default export / `courseGraph({ collections })` — Astro integration that reads
-  course content at build time, validates the DAG, and writes `/api/index.json`
-  plus `/api/<collection>/<slug>.json` for each node. The required `collections`
-  option is a list of `{ key, dir?, suffix? }` entries naming each
-  graph-participating collection: `key` doubles as the node type and ref prefix,
-  `dir` (relative to `src/`, default `content/<key>`) and `suffix` (e.g.
-  `".deck.mdx"`) let collections outside `src/content/` join the graph.
-- `readCourseNodes(srcDir, collections)` — collect `ContentNode[]` from the
-  configured directories under the project `src/` dir.
-- `writeCourseApi(srcDir, distDir, collections)` — compose `readCourseNodes` +
-  `resolveGraph` + file writes for the static API
-- `resolveGraph(nodes)` — pure function that returns a `ResolvedGraph` (nodes,
-  edges, validation errors)
-- `resolveEdgeTarget(fromCollection, ref)` — convert a bare slug like
-  `variables` (same-collection) or a qualified `topics/variables` into a node id
-- `parseEmbedRefs(body)` — extract refs from `{/* embed: <ref> */}` transclusion
-  directives in a raw body (fragments stripped, deduped); these merge into the
-  node's `related` refs so an embed implies an edge
-- `generateIndexJson(graph)` / `generateNodeJson(node)` — JSON serialisers
+## Content graph
 
-Schemas subpath (`astro-course-university/schemas`):
+Edges come from the undirected `related:` frontmatter field plus any
+`{/* embed: <ref> */}` directives in the body, so transclusion and the graph
+stay in sync from one declaration. A bare slug resolves within the declaring
+collection; `<collection>/<slug>` crosses collections. Dangling and self
+references fail the build.
 
-- `courseNodeSchema` — bare Zod object covering the graph-participating fields
-  (`title`, `description`, `tags`, `related`, `links`, `published`, `unlisted`,
-  `draft`). Consumers compose collections by `extend`ing this with type-specific
-  fields and passing the result to `defineCollection` themselves. `links` is
-  external URLs as `{ label, url }` pairs — rendered alongside related content
-  and exposed in the API, never graph edges. `published`, `unlisted` and `draft`
-  are orthogonal axes: `published: false` is visibility (out of
-  graph/listings/llms.txt entirely, and staged — dev still shows it),
-  `unlisted: true` is reach (live at its URL but linked from nowhere, in dev as
-  in production), `draft: true` is finality (visible, but flagged
-  not-yet-final).
-- `definePeopleCollection` — the collection factory that genuinely need
-  package-level wiring (`reference("people")` and `image()` respectively), so
-  they stay as factories.
+There is no fixed vocabulary of collections: `key` doubles as node type, ref
+prefix and API path segment, and consumers choose their own. Don't reintroduce
+hardcoded `topics` / `labs` / `assessments` handling.
 
-Content subpath (`astro-course-university/content`):
+## People
 
-- `getPublishedCollection(name, filter?)` — drop-in replacement for
-  `getCollection` returning the entries fit to list: it drops `published: false`
-  (production only) and `unlisted: true` (always). Accepts an optional secondary
-  filter applied after those checks. Safe on collections whose schema defines
-  neither field — missing fields are treated as published and listed.
-- `getRelatedEntries(entry, collections)` — render-time counterpart of the
-  build-time graph: every listable entry connected to `entry` in either
-  direction (declared `related`, embed directives, or incoming from other
-  nodes). `collections` must list every graph-participating collection key.
-
-Components subpath (`astro-course-university/components/*`):
-
-- `RelatedContent.astro` — drop-in related-content block for detail pages:
-  internal related entries as `/<collection>/<slug>/` links plus external
-  `links`, rendering nothing when the node has neither. Assumes the site's
-  detail routes live at `/<collection>/<slug>/`.
-
-Lecture decks (embed directives):
-
-Course sites splice node content into astromotion `.deck.mdx` decks with a
-site-level remark plugin that resolves `{/* embed: <ref>[#section] */}`
-directives — the package ships no deck preprocessor, but `parseEmbedRefs` reads
-those same directives out of node bodies at build time and merges them into the
-node's `related` refs, so transclusion and graph stay in sync with a single
-declaration (and a dangling embed target fails the build). Plain astromotion
-`{/* @include path.mdx */}` remains available for non-collection partials.
-
-## Content graph model
-
-Every content file under a configured collection directory contributes a
-`ContentNode`:
-
-```ts
-interface ContentNode {
-  id: string; // ref: "<collection>/<slug>", e.g. "topics/variables"
-  type: string; // the collection key
-  slug: string;
-  title: string;
-  description?: string;
-  tags: string[];
-  related: string[]; // resolved refs like "topics/functions"
-  links: ExternalLink[]; // external { label, url } pairs — not edges
-  meta: Record<string, unknown>; // type-specific fields (week, due, etc.)
-  body: string; // raw markdown body
-}
-```
-
-Edges are defined through an undirected `related` field in frontmatter, plus any
-`{/* embed: ... */}` directives in the body. Bare slugs resolve to the same
-collection (`related: [variables]` in a topic resolves to `topics/variables`);
-use `<collection>/<slug>` for cross-collection references
-(`related: [topics/functions]` in a crit). The build fails on dangling
-references or self-references.
-
-The package no longer hardcodes a vocabulary. Consumers pick the collection keys
-that fit their course — the historical `topics` / `labs` / `assessments` shape
-is one configuration among many.
-
-## People (non-graph collection)
-
-One further collection sits alongside the graph collections but is deliberately
-kept out of the content graph:
-
-- **people** — the cast of the course: convenor, TAs, guest lecturers. `title`
-  is the required display name; `affiliation`, `role`
-  (`convenor`/`ta`/`guest`/`other`), `email`, `url`, and `photo` (via Astro's
-  `image()`) are optional. The markdown body is an optional bio.
-
-It contributes no `ContentNode`s to the graph and has no `related:` field. An
-`author` field on another collection referencing it is a **typed foreign key**
-(validated by Astro's `reference()`), not a `related:` edge.
-
-**Reference validation caveat.** Astro's `reference()` emits a build-time
-_warning_ when a reference resolves to no entry — the build still succeeds and
-`getEntry()` returns `undefined`. Consumer byline code must handle undefined
-author gracefully (fall back to no link). A missing required `author` field, by
-contrast, fails the build via Zod validation.
-
-## Typical consumer setup
-
-```ts
-// astro.config.ts
-import { defineConfig } from "astro/config";
-import courseGraph from "astro-course-university";
-
-export default defineConfig({
-  integrations: [
-    courseGraph({
-      collections: [{ key: "topics" }, { key: "labs" }, { key: "assessments" }],
-    }),
-  ],
-});
-```
-
-```ts
-// src/content.config.ts
-import { defineCollection } from "astro:content";
-import { glob } from "astro/loaders";
-import { z } from "astro/zod";
-import {
-  courseNodeSchema,
-  definePeopleCollection,
-} from "astro-course-university/schemas";
-
-const loader = (dir: string) =>
-  glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
-
-export const collections = {
-  topics: defineCollection({
-    loader: loader("topics"),
-    schema: courseNodeSchema.passthrough(),
-  }),
-  labs: defineCollection({
-    loader: loader("labs"),
-    schema: courseNodeSchema
-      .extend({ week: z.coerce.number().int().min(1).max(13) })
-      .passthrough(),
-  }),
-  assessments: defineCollection({
-    loader: loader("assessments"),
-    schema: courseNodeSchema
-      .extend({
-        week: z.coerce.number().int().min(1).max(13),
-        due: z.coerce.date().nullish(),
-        weight: z.coerce.number().nullish(),
-      })
-      .passthrough(),
-  }),
-  people: definePeopleCollection(),
-};
-```
+The `people` collection sits alongside the graph collections but is deliberately
+outside the graph --- it contributes no `ContentNode`s and has no `related:`
+field. An `author` field on another collection referencing it is a typed foreign
+key (Astro's `reference()`), not an edge. Consumer byline code must tolerate an
+`author` that resolves to nothing: Astro only warns on an unresolved reference,
+so the build succeeds and `getEntry()` returns `undefined`.
 
 ## Tests
 
-Unit tests live next to the sources:
+Unit tests sit next to their sources:
 
-- `course-graph.test.ts` — pure graph resolution (bare slugs, cross-type
-  references, dangling/self-ref detection)
-- `course-content.test.ts` — filesystem reader + end-to-end graph + API writer,
-  exercised against an explicit collections config
-- `schemas.test.ts` — `courseNodeSchema` plus the `people` factory exercised
-  directly (valid frontmatter, defaults, required-field rejection,
-  role/email/url validation, passthrough behaviour). Uses a `vi.mock` shim for
-  `astro:content` and `astro/loaders` so the schema factories can be invoked
-  without an Astro build.
+- `course-graph.test.ts` --- pure graph resolution (bare slugs, cross-collection
+  refs, dangling/self-ref detection, `courseMetaSchema`)
+- `course-content.test.ts` --- filesystem reader, end-to-end graph, and API
+  writer, exercised against an explicit collections config
+- `schemas.test.ts` --- schema shapes and the `people` factory, invoked through
+  a `vi.mock` shim for `astro:content` and `astro/loaders` so no Astro build is
+  needed
 
-Cross-package integration tests live in `tests/` at the repo root:
-
-- `tests/examples.test.ts` — builds each example end-to-end
-- `tests/course-references.test.ts` — reference-validation integration: a
-  dangling `news.author` surfaces Astro's warning, and a missing `author:` field
-  fails the build
-
-Run with `pnpm --filter astro-course-university test` for package tests, or
-`pnpm test` / `pnpm test:examples` from the repo root for the full suite.
+Run `pnpm check` (format check, lint, typecheck, tests) --- the same command CI
+runs.
