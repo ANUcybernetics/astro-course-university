@@ -3,6 +3,8 @@ export { default } from "./course-graph-integration.js";
 export { courseMetaSchema } from "./course-graph-integration.js";
 export type { CourseGraphOptions, CourseMetaInput } from "./course-graph-integration.js";
 export { COURSE_API_SCHEMA_VERSION } from "./course-graph.js";
+export { toCourseCollections } from "./collections.js";
+export type { CourseCollectionSpec, CourseCollectionsSpec } from "./collections.js";
 
 export {
   resolveEdgeTarget,

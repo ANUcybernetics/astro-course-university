@@ -193,3 +193,51 @@ describe("definePeopleCollection", () => {
     expect((parsed as { twitter: unknown }).twitter).toBe("@someone");
   });
 });
+
+describe("defineCourseCollections", () => {
+  // Imported here rather than at the top so the vi.mock shims above apply.
+  test("builds one Astro collection per key with the node schema", async () => {
+    const { defineCourseCollections } = await import("./schemas.js");
+    const collections = defineCourseCollections({ topics: {}, labs: {} }) as unknown as Record<
+      string,
+      { loader: { base: string; pattern: string }; schema: z.ZodTypeAny }
+    >;
+    expect(Object.keys(collections)).toEqual(["topics", "labs"]);
+    expect(collections.topics.loader).toEqual({
+      base: "src/content/topics",
+      pattern: "**/*.{md,mdx}",
+    });
+    const parsed = collections.topics.schema.parse({ title: "Variables", extra: 1 });
+    expect(parsed).toMatchObject({ title: "Variables", published: true, extra: 1 });
+  });
+
+  test("applies schema extensions, dir, suffix and passthrough: false", async () => {
+    const { defineCourseCollections } = await import("./schemas.js");
+    const collections = defineCourseCollections(
+      {
+        labs: { schema: (node) => node.extend({ week: z.number().int() }) },
+        notes: { dir: "notes", suffix: ".note.md" },
+      },
+      { passthrough: false },
+    ) as unknown as Record<
+      string,
+      { loader: { base: string; pattern: string }; schema: z.ZodTypeAny }
+    >;
+    expect(collections.labs.schema.parse({ title: "Lab 1", week: 2 })).toMatchObject({ week: 2 });
+    expect(() => collections.labs.schema.parse({ title: "Lab 1" })).toThrow();
+    // passthrough: false strips unknown keys (zod's default) rather than rejecting them
+    expect(collections.labs.schema.parse({ title: "Lab 1", week: 1, extra: 1 })).not.toHaveProperty(
+      "extra",
+    );
+    expect(collections.notes.loader).toEqual({ base: "src/notes", pattern: "**/*.note.md" });
+  });
+
+  test("skips graph-only keys", async () => {
+    const { defineCourseCollections } = await import("./schemas.js");
+    const collections = defineCourseCollections({
+      topics: {},
+      lectures: { dir: "decks", suffix: ".deck.mdx", collection: false },
+    });
+    expect(Object.keys(collections)).toEqual(["topics"]);
+  });
+});

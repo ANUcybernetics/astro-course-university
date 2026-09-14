@@ -42,17 +42,13 @@ config below shows this package's part.
 // astro.config.ts
 import { defineConfig } from "astro/config";
 import courseGraph from "astro-course-university";
+import { courseCollections } from "./src/course-collections";
 
 export default defineConfig({
   integrations: [
     courseGraph({
-      collections: [
-        { key: "topics" },
-        { key: "labs" },
-        { key: "assessments" },
-        // collections outside src/content/ can join the graph too, e.g.
-        // astromotion decks: { key: "lectures", dir: "decks", suffix: ".deck.mdx" }
-      ],
+      // the same object src/content.config.ts builds its collections from
+      collections: courseCollections,
       // optional: IANA zone the site's bare frontmatter dates are local to
       timezone: "Australia/Canberra",
       // optional: course-record facts, emitted as a `course` block on
@@ -75,42 +71,50 @@ export default defineConfig({
 ```
 
 ```ts
-// src/content.config.ts
-import { defineCollection } from "astro:content";
-import { glob } from "astro/loaders";
+// src/course-collections.ts — a plain module both config files import
 import { z } from "astro/zod";
-import {
-  courseNodeSchema,
-  definePeopleCollection,
-} from "astro-course-university/schemas";
+import type { CourseCollectionsSpec } from "astro-course-university";
 
-const loader = (dir: string) =>
-  glob({ pattern: "**/*.{md,mdx}", base: `src/content/${dir}` });
+const week = z.coerce.number().int().min(1).max(13);
 
-export const collections = {
-  topics: defineCollection({
-    loader: loader("topics"),
-    schema: courseNodeSchema.passthrough(),
-  }),
-  labs: defineCollection({
-    loader: loader("labs"),
-    schema: courseNodeSchema
-      .extend({ week: z.coerce.number().int().min(1).max(13) })
-      .passthrough(),
-  }),
-  assessments: defineCollection({
-    loader: loader("assessments"),
-    schema: courseNodeSchema
-      .extend({
-        week: z.coerce.number().int().min(1).max(13),
+export const courseCollections = {
+  topics: {},
+  labs: { schema: (node) => node.extend({ week }) },
+  assessments: {
+    schema: (node) =>
+      node.extend({
+        week,
         due: z.coerce.date().nullish(),
         weight: z.coerce.number().nullish(),
-      })
-      .passthrough(),
-  }),
+      }),
+  },
+  // graph-only: astromotion owns the decks, so no Astro collection is defined
+  lectures: { dir: "decks", suffix: ".deck.mdx", collection: false },
+} satisfies CourseCollectionsSpec;
+```
+
+```ts
+// src/content.config.ts
+import {
+  defineCourseCollections,
+  definePeopleCollection,
+} from "astro-course-university/schemas";
+import { courseCollections } from "./course-collections";
+
+export const collections = {
+  ...defineCourseCollections(courseCollections),
   people: definePeopleCollection(),
 };
 ```
+
+and `courseGraph({ collections: courseCollections, … })` in `astro.config.ts`
+takes the same object, so the collection keys, directories and suffixes are
+declared once. `defineCourseCollections` builds each collection over `src/<dir>`
+(default `content/<key>`) with `courseNodeSchema` or the spec's extension of it,
+`passthrough` on unless told otherwise. A collection that doesn't fit the
+pattern is still a plain `defineCollection` over `courseNodeSchema` next to the
+spread, and `courseGraph` still accepts the explicit `[{ key, dir?, suffix? }]`
+list.
 
 At build time, `courseGraph()` walks the configured directories, validates the
 graph, and emits a static JSON API at `/api/index.json` +
@@ -198,15 +202,17 @@ defaults to "The spec".
   types `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`,
   `GraphEdge`, `GraphError`, `ResolvedGraph`, `CourseCollection`,
   `CourseGraphOptions`, `CourseApiResult`
-- `astro-course-university/schemas` — `courseNodeSchema` (the bare graph-node
-  Zod shape that consumers extend), plus `definePeopleCollection`
-- `astro-course-university/content` — `getPublishedCollection(name, filter?)`
-  and `getRelatedEntries(entry, collections)` (the render-time counterpart of
-  the build-time graph: every listable entry connected to `entry` in either
-  direction). Both filter `published: false` entries in production builds only —
-  the dev server includes them so staged content stays previewable — and
-  `unlisted: true` entries everywhere, that flag being a permanent property of
-  the entry rather than a stage
+- `astro-course-university/schemas` — `defineCourseCollections` (Astro
+  collections from the shared spec), `courseNodeSchema` (the bare graph-node Zod
+  shape the spec extends), plus `definePeopleCollection`
+- `astro-course-university/content` — `getPublishedCollection(name, filter?)`,
+  `getCourseStaticPaths(name)` (a detail route's `getStaticPaths` over the
+  listable entries) and `getRelatedEntries(entry, collections)` (the render-time
+  counterpart of the build-time graph: every listable entry connected to `entry`
+  in either direction). Both filter `published: false` entries in production
+  builds only — the dev server includes them so staged content stays previewable
+  — and `unlisted: true` entries everywhere, that flag being a permanent
+  property of the entry rather than a stage
 - `astro-course-university/components/RelatedContent.astro` — drop-in
   related-content block for detail pages: internal related entries plus external
   `links`, rendering nothing when the node has neither

@@ -2,6 +2,21 @@
 
 All notable changes to the `astro-course-university` package.
 
+## 0.2.0 — 2026-09-14
+
+**One declaration for the graph collections.** A `CourseCollectionsSpec`
+object (key → `{ dir?, suffix?, schema?, collection? }`) is now read from both
+sides: `defineCourseCollections(spec)` in `src/content.config.ts` builds the
+Astro collections over `courseNodeSchema` (or each key's extension of it), and
+`courseGraph({ collections: spec })` accepts the same object, so keys,
+directories and suffixes are no longer restated. `collection: false` marks a
+graph-only key such as astromotion decks. The explicit `[{ key, dir?, suffix?
+}]` list still works.
+
+`getCourseStaticPaths(name)` from `astro-course-university/content` is the
+`getStaticPaths` a detail route needs: one page per listable entry, keyed by
+id, with the entry as a prop.
+
 ## 0.1.1 — 2026-09-03
 
 `courseNodeSchema` gains `unlisted`, a third axis alongside `published` and

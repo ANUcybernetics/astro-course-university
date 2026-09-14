@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import { z } from "astro/zod";
 import { writeCourseApi } from "./course-content.js";
 import type { CourseCollection } from "./course-content.js";
+import { toCourseCollections } from "./collections.js";
+import type { CourseCollectionsSpec } from "./collections.js";
 import type { CourseMeta } from "./course-graph.js";
 
 /**
@@ -41,9 +43,11 @@ export interface CourseGraphOptions {
    * the `/api/<key>/<slug>.json` path segment, and the cross-collection
    * ref prefix (`related: ["<key>/<slug>"]`). `dir` (relative to `src/`,
    * default `content/<key>`) and `suffix` (e.g. `".deck.mdx"`) let
-   * collections outside `src/content/` join the graph.
+   * collections outside `src/content/` join the graph. Takes either that
+   * list or the spec object `defineCourseCollections()` reads, so the two
+   * config files share one declaration.
    */
-  collections: CourseCollection[];
+  collections: CourseCollection[] | CourseCollectionsSpec;
   /**
    * IANA timezone name (e.g. `"Australia/Canberra"`) the site's bare
    * frontmatter dates (`due: 2026-08-17`) should be interpreted in.
@@ -70,7 +74,8 @@ export interface CourseGraphOptions {
 }
 
 export default function courseGraph(options: CourseGraphOptions): AstroIntegration {
-  const { collections, timezone } = options;
+  const { timezone } = options;
+  const collections = toCourseCollections(options.collections);
   let course: CourseMeta | undefined;
   if (options.course) {
     const parsed = courseMetaSchema.safeParse(options.course);

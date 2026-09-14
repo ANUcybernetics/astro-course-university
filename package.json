@@ -20,6 +20,7 @@
   },
   "files": [
     "CHANGELOG.md",
+    "collections.ts",
     "components",
     "index.ts",
     "content-helpers.ts",

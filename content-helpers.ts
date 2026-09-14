@@ -45,6 +45,25 @@ export async function getPublishedCollection<C extends CollectionKey>(
   });
 }
 
+/**
+ * `getStaticPaths` for a detail route over a graph collection: one page per
+ * listable entry (`getPublishedCollection` rules), keyed by the entry id and
+ * carrying the entry as a prop.
+ *
+ * ```astro
+ * ---
+ * // src/pages/labs/[slug].astro
+ * import { getCourseStaticPaths } from "astro-course-university/content";
+ * export const getStaticPaths = () => getCourseStaticPaths("labs");
+ * const { entry } = Astro.props;
+ * ---
+ * ```
+ */
+export async function getCourseStaticPaths<C extends CollectionKey>(collection: C) {
+  const entries = await getPublishedCollection(collection);
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
 /** The minimal entry shape `getRelatedEntries` reads and returns — a
  *  structural subset of Astro's `CollectionEntry`. */
 export interface GraphEntry {
