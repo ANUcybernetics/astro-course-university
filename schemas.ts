@@ -54,13 +54,28 @@ export function definePeopleCollection(options: DefineCourseCollectionOptions = 
   });
 }
 
-type SpecSchema<C> = C extends { schema: (node: z.ZodObject<z.ZodRawShape>) => infer S }
+// Inferred from the callback's return type alone: matching its parameter as
+// well fails in consumers, where the package's zod types and the site's are
+// separate instantiations even though they are the same version.
+type SpecSchema<C> = C extends { schema: (...args: never[]) => infer S }
   ? S
   : typeof courseNodeSchema;
 
+/**
+ * What `defineCourseCollections` returns per key: the shape Astro's generated
+ * `astro:content` types read (`schema` for the entry data, `loader` for the
+ * entry ids). Spelled out structurally because in a consumer `astro:content`
+ * declares `defineCollection` without generics, so `ReturnType<typeof
+ * defineCollection<S>>` would collapse every key to the base schema.
+ */
+export interface CourseCollectionConfig<S> {
+  loader: ReturnType<typeof glob>;
+  schema: S;
+}
+
 type CourseCollectionsOf<T extends CourseCollectionsSpec> = {
-  [K in keyof T as T[K] extends { collection: false } ? never : K]: ReturnType<
-    typeof defineCollection<SpecSchema<T[K]>>
+  [K in keyof T as T[K] extends { collection: false } ? never : K]: CourseCollectionConfig<
+    SpecSchema<T[K]>
   >;
 };
 

@@ -2,6 +2,16 @@
 
 All notable changes to the `astro-course-university` package.
 
+## 0.2.2 — 2026-09-14
+
+`defineCourseCollections` now infers each key's schema from the callback's
+return type alone. 0.2.1 still matched the callback's parameter against a
+generic Zod object, which fails in a consumer where the package's zod types
+and the site's are separate instantiations, so extended fields such as `week`
+came back untyped. The return type is also spelled structurally
+(`CourseCollectionConfig`), because a consumer's `astro:content` declares
+`defineCollection` without generics.
+
 ## 0.2.1 — 2026-09-14
 
 The spec's `schema` callback is typed against `courseNodeSchema` itself rather
