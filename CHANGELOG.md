@@ -2,6 +2,14 @@
 
 All notable changes to the `astro-course-university` package.
 
+## 0.2.1 — 2026-09-14
+
+The spec's `schema` callback is typed against `courseNodeSchema` itself rather
+than a generic Zod object, so `node.extend(...)` keeps the concrete field types
+and `entry.data.title` no longer widens to `unknown` in consumer pages.
+`courseNodeSchema` moves to a module free of `astro:content` for that purpose;
+its import path is unchanged.
+
 ## 0.2.0 — 2026-09-14
 
 **One declaration for the graph collections.** A `CourseCollectionsSpec`

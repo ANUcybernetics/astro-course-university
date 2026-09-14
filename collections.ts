@@ -1,5 +1,6 @@
 import type { z } from "astro/zod";
 import type { CourseCollection } from "./course-content.js";
+import type { courseNodeSchema } from "./node-schema.js";
 
 /**
  * One graph collection, declared once and read from two places: the
@@ -21,7 +22,7 @@ export interface CourseCollectionSpec<
    * `(node) => node.extend({ week: z.number().int() })`. Omit for the bare
    * node shape.
    */
-  schema?: (node: z.ZodObject<z.ZodRawShape>) => S;
+  schema?: (node: typeof courseNodeSchema) => S;
   /**
    * Set to `false` for a key that joins the graph but is not an Astro
    * collection — astromotion decks under `src/decks/`, or a collection the
