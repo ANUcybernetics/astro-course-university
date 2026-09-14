@@ -14,11 +14,27 @@ consumer's chosen theme handles visual presentation.
 
 ## Install
 
+The package isn't published to npm; install it from an exact
+[release tag](https://github.com/ANUcybernetics/astro-course-university/tags):
+
 ```sh
-pnpm add astro-course-university
+pnpm add "github:ANUcybernetics/astro-course-university#vX.Y.Z"
 ```
 
-Requires `astro ^7.0.0` as a peer dependency.
+Requires `astro ^7.0.0` as a peer dependency. To upgrade, change the tag and run
+`pnpm install`.
+
+## Pairing with a theme
+
+This package renders nothing but two small components; a course site pairs it
+with a theme for layouts and styling, typically
+[astro-theme-university](https://github.com/ANUcybernetics/astro-theme-university)
+(whose docs have a
+[course sites guide](https://anucybernetics.github.io/astro-theme-university/docs/guides/brand-packages/#course-sites))
+plus an institution's brand package, and with
+[astromotion](https://github.com/ANUcybernetics/astromotion) for lecture slide
+decks. The three integrations sit side by side in `astro.config.ts`; the minimal
+config below shows this package's part.
 
 ## Minimal consumer config
 
