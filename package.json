@@ -48,21 +48,21 @@
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@e18e/eslint-plugin": "^0.8.0",
     "@types/node": "^24.0.0",
-    "astro": "^7.3.1",
+    "astro": "^7.3.2",
     "eslint-plugin-no-only-tests": "^3.4.0",
     "eslint-plugin-perfectionist": "^5.11.0",
     "eslint-plugin-unused-imports": "^4.4.1",
-    "oxfmt": "^0.66.0",
-    "oxlint": "^1.81.0",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0"
   },
   "peerDependencies": {
     "astro": "^7.0.0"
