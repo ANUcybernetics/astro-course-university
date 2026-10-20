@@ -34,6 +34,35 @@ const DEFAULT_COLLECTIONS: CourseCollection[] = [
 ];
 
 describe("readCourseNodes", () => {
+  fsTest("orders nodes by collection, then numeric slug", async ({ tmpDir }) => {
+    await writeMockCourse(tmpDir, [
+      { collection: "labs", slug: "week-10", frontmatter: "title: Ten" },
+      { collection: "labs", slug: "week-2", frontmatter: "title: Two" },
+      { collection: "topics", slug: "zeta", frontmatter: "title: Zeta" },
+      { collection: "labs", slug: "week-1", frontmatter: "title: One" },
+    ]);
+    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
+    expect(nodes.map((n) => n.id)).toEqual([
+      "topics/zeta",
+      "labs/week-1",
+      "labs/week-2",
+      "labs/week-10",
+    ]);
+  });
+
+  fsTest("drops source-relative paths from meta", async ({ tmpDir }) => {
+    await writeMockCourse(tmpDir, [
+      {
+        collection: "assessments",
+        slug: "a1",
+        frontmatter:
+          "title: A1\nweight: 20\nheroImage: ../../assets/hero.avif\nheroImageAlt: A hero\nrepoPrefix: a1",
+      },
+    ]);
+    const [node] = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
+    expect(node.meta).toEqual({ weight: 20, heroImageAlt: "A hero", repoPrefix: "a1" });
+  });
+
   fsTest("reads a single topic", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       {

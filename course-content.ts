@@ -73,6 +73,19 @@ function toExternalLinks(val: unknown): ExternalLink[] {
   });
 }
 
+/**
+ * Frontmatter minus values that only mean something in the source tree: a
+ * relative path (`heroImage: ../../assets/hero.avif`) resolves against the
+ * markdown file, so a feed reader can do nothing with it.
+ */
+function publishableMeta(fields: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(fields).filter(
+      ([, value]) => !(typeof value === "string" && /^\.\.?\//.test(value)),
+    ),
+  );
+}
+
 export async function readCourseNodes(
   srcDir: string,
   collections: CourseCollection[],
@@ -148,13 +161,20 @@ export async function readCourseNodes(
         related,
         links: toExternalLinks(fm.links),
         spec: toStringArray(fm.spec),
-        meta: rest,
+        meta: publishableMeta(rest),
         body,
       });
     }
   }
 
-  return nodes;
+  // Collection order as declared, then numeric slug order within each, so
+  // week-10 follows week-9 rather than week-1 — readdir order is unspecified.
+  const order = new Map(collections.map((c, i) => [c.key, i]));
+  return nodes.toSorted(
+    (a, b) =>
+      (order.get(a.type) ?? 0) - (order.get(b.type) ?? 0) ||
+      a.slug.localeCompare(b.slug, "en", { numeric: true }),
+  );
 }
 
 export interface CourseApiResult {

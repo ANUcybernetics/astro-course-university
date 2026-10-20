@@ -124,10 +124,13 @@ graph, and emits a static JSON API at `/api/index.json` +
 stable catalogue URL differs from the source deployment. Index entries carry
 `{id, type, title, description, tags, related, spec, meta}` (`spec` is the
 deliverable's contract — see below — omitted when empty; `meta` is the node's
-leftover frontmatter — `week`, `due`, `draft`, and so on — omitted when empty);
-per-node JSON adds `links` and the full markdown `body`. A node's `related` list
-includes incoming edges as well as declared ones, matching what `RelatedContent`
-renders on the page; the top-level `edges` array records declared direction.
+leftover frontmatter — `week`, `due`, `draft`, and so on — omitted when empty,
+less any relative path such as `heroImage: ../../assets/hero.avif`, which only
+resolves inside the source tree); per-node JSON adds `links` and the full
+markdown `body`. Nodes are ordered by collection as declared, then numerically
+by slug, so `week-10` follows `week-9`. A node's `related` list includes
+incoming edges as well as declared ones, matching what `RelatedContent` renders
+on the page; the top-level `edges` array records declared direction.
 
 If the integration is given a `timezone` (an IANA zone name, validated at config
 time), it is emitted verbatim as a `timezone` field on the index and on every
@@ -198,10 +201,10 @@ defaults to "The spec".
 - `astro-course-university` — default export is `courseGraph(options)`; named
   exports for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`,
   `resolveGraph`, `resolveEdgeTarget`, `symmetriseRelated`, `parseEmbedRefs`,
-  `generateIndexJson`, `generateNodeJson`, `COURSE_API_SCHEMA_VERSION`, plus the
-  types `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`,
-  `GraphEdge`, `GraphError`, `ResolvedGraph`, `CourseCollection`,
-  `CourseGraphOptions`, `CourseApiResult`
+  `generateIndexJson`, `generateNodeJson`, `keyDatesMarkdown`,
+  `COURSE_API_SCHEMA_VERSION`, plus the types `ContentNode`, `CourseMeta`,
+  `CourseMetaInput`, `ExternalLink`, `GraphEdge`, `GraphError`, `ResolvedGraph`,
+  `CourseCollection`, `CourseGraphOptions`, `CourseApiResult`, `KeyDatesOptions`
 - `astro-course-university/schemas` — `defineCourseCollections` (Astro
   collections from the shared spec), `courseNodeSchema` (the bare graph-node Zod
   shape the spec extends), plus `definePeopleCollection`

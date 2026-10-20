@@ -24,4 +24,6 @@ export type {
 } from "./course-graph.js";
 
 export { readCourseNodes, writeCourseApi } from "./course-content.js";
+export { keyDatesMarkdown } from "./key-dates.js";
+export type { KeyDatesOptions } from "./key-dates.js";
 export type { CourseApiResult, CourseCollection } from "./course-content.js";

@@ -27,6 +27,7 @@
     "course-graph-integration.ts",
     "course-graph.ts",
     "index.ts",
+    "key-dates.ts",
     "node-schema.ts",
     "schemas.ts"
   ],

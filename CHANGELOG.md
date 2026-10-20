@@ -2,6 +2,16 @@
 
 All notable changes to the `astro-course-university` package.
 
+## 0.3.0 — 2026-10-20
+
+`keyDatesMarkdown(nodes, options)` renders every node with a `due` date as a
+"Key dates" markdown block (soonest first, with `weight` and `week`), for the
+theme's `llmsTxt: { extra }`. Nodes in `/api/index.json` are ordered by
+collection, then numerically by slug, so `week-10` follows `week-9`. `meta` no
+longer carries relative paths such as `heroImage: ../../assets/hero.avif`, which
+meant nothing outside the source tree --- breaking for a consumer that read
+them.
+
 ## 0.2.2 — 2026-09-14
 
 `defineCourseCollections` now infers each key's schema from the callback's
