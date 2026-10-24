@@ -1,5 +1,15 @@
 packages:
   - "."
 
+# pnpm 11 build-script approval. Sharp's install/check.js hits a system
+# libvips (Homebrew) and tries to build from source — skip the script and
+# rely on the prebuilt @img/sharp-* platform binary at runtime.
 allowBuilds:
   esbuild: true
+  sharp: false
+
+# Name patterns, not name@version: the supply-chain verify gate matches by
+# package-name glob, so versioned entries are silently ignored.
+minimumReleaseAgeExclude:
+  - astro
+  - "@astrojs/*"
