@@ -1,6 +1,6 @@
 import { getCollection } from "astro:content";
 import type { CollectionEntry, CollectionKey } from "astro:content";
-import { parseEmbedRefs, resolveEdgeTarget } from "./course-graph.js";
+import { resolveEdgeTarget } from "./course-graph.js";
 
 /**
  * Drop-in replacement for `getCollection` that returns the entries fit to
@@ -76,15 +76,10 @@ export interface GraphEntry {
     unlisted?: boolean;
     description?: string | null;
   };
-  body?: string;
 }
 
 function refsOf(entry: GraphEntry): string[] {
-  const declared = (entry.data.related ?? []).map((r) => resolveEdgeTarget(entry.collection, r));
-  const embedded = parseEmbedRefs(entry.body ?? "").map((r) =>
-    resolveEdgeTarget(entry.collection, r),
-  );
-  return [...declared, ...embedded];
+  return (entry.data.related ?? []).map((r) => resolveEdgeTarget(entry.collection, r));
 }
 
 /**
@@ -92,9 +87,9 @@ function refsOf(entry: GraphEntry): string[] {
  * connected to `entry`, in either direction (in dev, unpublished nodes
  * are included too, and unlisted ones never are — mirroring
  * `getPublishedCollection`). `related` is undirected —
- * declare (or embed) on whichever side is convenient and both pages
+ * declare on whichever side is convenient and both pages
  * show the connection. Outgoing refs come first, in declaration order
- * (embeds after declared `related`), then incoming.
+ * then incoming.
  *
  * `collections` must list every graph-participating collection (the
  * same keys passed to `courseGraph()`), since incoming links can come

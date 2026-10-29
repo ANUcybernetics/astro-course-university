@@ -4,7 +4,6 @@ import { parse as parseYaml } from "yaml";
 import {
   generateIndexJson,
   generateNodeJson,
-  parseEmbedRefs,
   resolveEdgeTarget,
   resolveGraph,
   symmetriseRelated,
@@ -128,15 +127,8 @@ export async function readCourseNodes(
       const id = `${type}/${slug}`;
       const body = fmMatch[2].trim();
 
-      // An embed implies a related edge: `{/* embed: <ref> */}` directives
-      // in the body merge into the declared `related` refs, deduplicated,
-      // so transcluding a node never needs a second declaration.
       const related = [
-        ...new Set(
-          [...toStringArray(fm.related), ...parseEmbedRefs(body)].map((r) =>
-            resolveEdgeTarget(type, r),
-          ),
-        ),
+        ...new Set(toStringArray(fm.related).map((r) => resolveEdgeTarget(type, r))),
       ];
 
       const {

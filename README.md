@@ -152,21 +152,16 @@ won't build until the required facts are filled in.
 ## Refs
 
 One address format — the **ref**, `<collection>/<slug>` — names a node
-everywhere: `related:` frontmatter entries, `{/* embed: ... */}` transclusion
-directives, graph node ids, API paths, and (by the site's own routing
-convention) page URLs at `/<collection>/<slug>/`. A bare slug is shorthand for
-"same collection as the declaring node". The collection `key` is the whole
-story: collection name = node type = ref prefix = API path segment; `dir`
-(relative to `src/`, default `content/<key>`) and `suffix` (e.g. `".deck.mdx"`)
-only exist so collections outside `src/content/` can join the graph.
+everywhere: `related:` frontmatter entries, graph node ids, API paths, and (by
+the site's own routing convention) page URLs at `/<collection>/<slug>/`. A bare
+slug is shorthand for "same collection as the declaring node". The collection
+`key` is the whole story: collection name = node type = ref prefix = API path
+segment; `dir` (relative to `src/`, default `content/<key>`) and `suffix` (e.g.
+`".deck.mdx"`) only exist so collections outside `src/content/` can join the
+graph.
 
-Nodes connect two ways, both undirected and both build-validated (dangling or
-self refs fail the build):
-
-- **`related:`** frontmatter — refs to other nodes in the site
-- **`{/* embed: <ref>[#section] */}`** body directives — the deck transclusion
-  syntax; an embed implies a related edge, so transcluding a node never needs a
-  second declaration
+Nodes connect through **`related:`** frontmatter — refs to other nodes in the
+site, undirected and build-validated (dangling or self refs fail the build).
 
 External URLs live in the separate **`links:`** frontmatter field
 (`{ label, url }` pairs) — rendered alongside related content and exposed in the
@@ -200,11 +195,11 @@ defaults to "The spec".
 
 - `astro-course-university` — default export is `courseGraph(options)`; named
   exports for `courseMetaSchema`, `readCourseNodes`, `writeCourseApi`,
-  `resolveGraph`, `resolveEdgeTarget`, `symmetriseRelated`, `parseEmbedRefs`,
-  `generateIndexJson`, `generateNodeJson`, `keyDatesMarkdown`,
-  `COURSE_API_SCHEMA_VERSION`, plus the types `ContentNode`, `CourseMeta`,
-  `CourseMetaInput`, `ExternalLink`, `GraphEdge`, `GraphError`, `ResolvedGraph`,
-  `CourseCollection`, `CourseGraphOptions`, `CourseApiResult`, `KeyDatesOptions`
+  `resolveGraph`, `resolveEdgeTarget`, `symmetriseRelated`, `generateIndexJson`,
+  `generateNodeJson`, `keyDatesMarkdown`, `COURSE_API_SCHEMA_VERSION`, plus the
+  types `ContentNode`, `CourseMeta`, `CourseMetaInput`, `ExternalLink`,
+  `GraphEdge`, `GraphError`, `ResolvedGraph`, `CourseCollection`,
+  `CourseGraphOptions`, `CourseApiResult`, `KeyDatesOptions`
 - `astro-course-university/schemas` — `defineCourseCollections` (Astro
   collections from the shared spec), `courseNodeSchema` (the bare graph-node Zod
   shape the spec extends), plus `definePeopleCollection`
@@ -222,15 +217,6 @@ defaults to "The spec".
 - `astro-course-university/components/SpecList.astro` — drop-in spec block for
   detail pages: the deliverable's `spec:` lines as a list, rendering nothing
   when the entry declares none
-
-## Lecture decks
-
-This package doesn't process slide decks — the consumer site's remark plugin
-resolves `{/* embed: <ref>[#section] */}` directives in `.deck.mdx` files by
-splicing the referenced node's body (or just one `#section` of it) into the
-deck. What this package contributes is the graph side: those same embed
-directives are parsed out of node bodies at build time and become validated
-related edges, so the deck→topic mapping maintains itself.
 
 ## Status
 

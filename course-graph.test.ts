@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import {
   generateIndexJson,
   generateNodeJson,
-  parseEmbedRefs,
   resolveEdgeTarget,
   resolveGraph,
   symmetriseRelated,
@@ -32,41 +31,6 @@ describe("resolveEdgeTarget", () => {
 
   test("qualified ref passes through unchanged", () => {
     expect(resolveEdgeTarget("labs", "topics/variables")).toBe("topics/variables");
-  });
-});
-
-describe("parseEmbedRefs", () => {
-  test("extracts a qualified ref", () => {
-    expect(parseEmbedRefs("{/* embed: topics/agent-loops */}")).toEqual(["topics/agent-loops"]);
-  });
-
-  test("strips section fragments", () => {
-    expect(parseEmbedRefs("{/* embed: topics/overview#learning-outcomes */}")).toEqual([
-      "topics/overview",
-    ]);
-  });
-
-  test("dedupes multiple embeds of the same node", () => {
-    const body = "{/* embed: topics/a#one */}\n\n---\n\n{/* embed: topics/a#two */}";
-    expect(parseEmbedRefs(body)).toEqual(["topics/a"]);
-  });
-
-  test("finds multiple distinct refs in order", () => {
-    const body = "{/* embed: topics/a */}\n\ntext\n\n{/* embed: crits/week-3 */}";
-    expect(parseEmbedRefs(body)).toEqual(["topics/a", "crits/week-3"]);
-  });
-
-  test("tolerates flexible whitespace", () => {
-    expect(parseEmbedRefs("{  /* embed:    topics/a   */ }")).toEqual(["topics/a"]);
-  });
-
-  test("ignores other directives and plain text", () => {
-    const body = "{/* topic: old-syntax */}\n{/* notes: speaker notes */}\nembed: not-a-directive";
-    expect(parseEmbedRefs(body)).toEqual([]);
-  });
-
-  test("returns empty array for empty body", () => {
-    expect(parseEmbedRefs("")).toEqual([]);
   });
 });
 

@@ -2,6 +2,13 @@
 
 All notable changes to the `astro-course-university` package.
 
+## 0.4.0 — 2026-10-30
+
+`parseEmbedRefs` and embed-derived edges are gone: `{/* embed: <ref> */}`
+directives in a node's body no longer become graph edges, so declare the
+connection in `related:` instead. Breaking for a consumer that still transcludes
+content with that syntax.
+
 ## 0.3.0 — 2026-10-20
 
 `keyDatesMarkdown(nodes, options)` renders every node with a `due` date as a

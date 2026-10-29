@@ -12,11 +12,10 @@ Examples use invented institutions and course codes. Brand assets belong in a
 consumer's own brand layer.
 
 `README.md` is the API reference: entry points, `courseGraph()` options
-(`collections`, `timezone`, `course`, `canonicalUrl`), refs, specs and deck
-embeds. Point at it rather than restating it here, and update it whenever the
-public surface changes. Per-symbol contracts --- including the
-`published`/`unlisted`/`draft` axes and `spec` --- live in the JSDoc on
-`schemas.ts` and `course-graph.ts`.
+(`collections`, `timezone`, `course`, `canonicalUrl`), refs and specs. Point at
+it rather than restating it here, and update it whenever the public surface
+changes. Per-symbol contracts --- including the `published`/`unlisted`/`draft`
+axes and `spec` --- live in the JSDoc on `schemas.ts` and `course-graph.ts`.
 
 Sources sit flat at the repo root, with `.astro` components in `components/`.
 The `exports` map in `package.json` is the list of public entry points; a new
@@ -24,11 +23,9 @@ public module needs an entry there and in `files`, or it won't ship.
 
 ## Content graph
 
-Edges come from the undirected `related:` frontmatter field plus any
-`{/* embed: <ref> */}` directives in the body, so transclusion and the graph
-stay in sync from one declaration. A bare slug resolves within the declaring
-collection; `<collection>/<slug>` crosses collections. Dangling and self
-references fail the build.
+Edges come from the undirected `related:` frontmatter field. A bare slug
+resolves within the declaring collection; `<collection>/<slug>` crosses
+collections. Dangling and self references fail the build.
 
 There is no fixed vocabulary of collections: `key` doubles as node type, ref
 prefix and API path segment, and consumers choose their own. Don't reintroduce

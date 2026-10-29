@@ -8,7 +8,6 @@ export type { CourseCollectionSpec, CourseCollectionsSpec } from "./collections.
 
 export {
   resolveEdgeTarget,
-  parseEmbedRefs,
   resolveGraph,
   symmetriseRelated,
   generateIndexJson,

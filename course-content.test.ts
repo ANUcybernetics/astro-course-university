@@ -169,37 +169,6 @@ describe("readCourseNodes", () => {
     expect(a.related).toEqual(["topics/b"]);
   });
 
-  fsTest("derives related edges from embed directives", async ({ tmpDir }) => {
-    await writeMockCourse(tmpDir, [
-      {
-        collection: "labs",
-        slug: "lab1",
-        frontmatter: "title: Lab 1\nweek: 1",
-        body: "# Intro\n\n{/* embed: topics/variables#setup */}\n\n---\n\n{/* embed: topics/functions */}",
-      },
-      { collection: "topics", slug: "variables", frontmatter: "title: Variables" },
-      { collection: "topics", slug: "functions", frontmatter: "title: Functions" },
-    ]);
-    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
-    const lab = nodes.find((n) => n.type === "labs")!;
-    expect(lab.related).toEqual(["topics/variables", "topics/functions"]);
-  });
-
-  fsTest("dedupes embed-derived refs against declared related", async ({ tmpDir }) => {
-    await writeMockCourse(tmpDir, [
-      {
-        collection: "labs",
-        slug: "lab1",
-        frontmatter: "title: Lab 1\nweek: 1\nrelated:\n  - topics/variables",
-        body: "{/* embed: topics/variables */}\n\n{/* embed: topics/variables#again */}",
-      },
-      { collection: "topics", slug: "variables", frontmatter: "title: Variables" },
-    ]);
-    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
-    const lab = nodes.find((n) => n.type === "labs")!;
-    expect(lab.related).toEqual(["topics/variables"]);
-  });
-
   fsTest("parses external links", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       {
@@ -410,24 +379,6 @@ describe("end-to-end: read content then resolve graph", () => {
     });
   });
 
-  fsTest("detects dangling embed reference", async ({ tmpDir }) => {
-    await writeMockCourse(tmpDir, [
-      {
-        collection: "topics",
-        slug: "functions",
-        frontmatter: "title: Functions",
-        body: "{/* embed: topics/nonexistent */}",
-      },
-    ]);
-    const nodes = await readCourseNodes(tmpDir, DEFAULT_COLLECTIONS);
-    const graph = resolveGraph(nodes);
-    expect(graph.errors).toHaveLength(1);
-    expect(graph.errors[0]).toMatchObject({
-      type: "dangling-ref",
-      ref: "topics/nonexistent",
-    });
-  });
-
   fsTest("resolves valid related links", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       { collection: "topics", slug: "loops", frontmatter: "title: Loops\nrelated:\n  - variables" },
@@ -439,7 +390,7 @@ describe("end-to-end: read content then resolve graph", () => {
     expect(graph.edges).toEqual([{ from: "topics/loops", to: "topics/variables" }]);
   });
 
-  fsTest("deck embeds become lecture-to-topic edges", async ({ tmpDir }) => {
+  fsTest("deck collections join the graph", async ({ tmpDir }) => {
     await writeMockCourse(tmpDir, [
       { collection: "topics", slug: "overview", frontmatter: "title: Overview" },
     ]);
@@ -447,7 +398,7 @@ describe("end-to-end: read content then resolve graph", () => {
     await mkdir(decksDir, { recursive: true });
     await writeFile(
       join(decksDir, "week-1.deck.mdx"),
-      "---\ntitle: Week 1\n---\n\n{/* embed: topics/overview#outcomes */}\n",
+      "---\ntitle: Week 1\nrelated:\n  - topics/overview\n---\n\nSlide.\n",
     );
     const nodes = await readCourseNodes(tmpDir, [
       { key: "topics" },
