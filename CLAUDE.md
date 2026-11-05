@@ -48,6 +48,8 @@ Unit tests sit next to their sources:
   refs, dangling/self-ref detection, `courseMetaSchema`)
 - `course-content.test.ts` --- filesystem reader, end-to-end graph, and API
   writer, exercised against an explicit collections config
+- `collections.test.ts` and `key-dates.test.ts` --- `toCourseCollections`, and
+  `keyDatesMarkdown`
 - `schemas.test.ts` --- schema shapes and the `people` factory, invoked through
   a `vi.mock` shim for `astro:content` and `astro/loaders` so no Astro build is
   needed
