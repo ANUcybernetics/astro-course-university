@@ -25,25 +25,17 @@ const links = entry.data.links ?? [];
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
-{
-  (related.length > 0 || links.length > 0) && (
-    <aside class="related-content" aria-label={heading}>
-      <h2>{heading}</h2>
-      <ul>
-        {related.map((e) => (
-          <li>
-            <a href={`${base}/${e.collection}/${e.id}/`}>{e.data.title}</a>
-          </li>
-        ))}
-        {links.map((l) => (
-          <li class="external">
-            <a href={l.url}>{l.label}</a>
-          </li>
-        ))}
-      </ul>
-    </aside>
-  )
-}
+{(related.length > 0 || links.length > 0) && <aside class="related-content" aria-label={heading}>
+  <h2>{heading}</h2>
+  <ul>
+    {related.map((e) => <li>
+      <a href={`${base}/${e.collection}/${e.id}/`}>{e.data.title}</a>
+    </li>)}
+    {links.map((l) => <li class="external">
+      <a href={l.url}>{l.label}</a>
+    </li>)}
+  </ul>
+</aside>}
 
 <style>
   .related-content {

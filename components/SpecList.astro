@@ -17,22 +17,15 @@ interface Props {
 const { spec, heading = "The spec" } = Astro.props;
 ---
 
-{
-  spec && spec.length > 0 && (
-    <section class="spec-list" aria-label={heading}>
-      <h2>{heading}</h2>
-      <p>
-        <slot>
-          What the markers will be considering when they judge whether the
-          submitted work matches what was required. Some of these can be
-          checked mechanically; the rest call for human judgement.
-        </slot>
-      </p>
-      <ul>
-        {spec.map((line) => (
-          <li>{line}</li>
-        ))}
-      </ul>
-    </section>
-  )
-}
+{spec && spec.length > 0 && <section class="spec-list" aria-label={heading}>
+  <h2>{heading}</h2>
+  <p>
+    <slot>
+      What the markers will be considering when they judge whether the submitted work matches what
+      was required. Some of these can be checked mechanically; the rest call for human judgement.
+    </slot>
+  </p>
+  <ul>
+    {spec.map((line) => <li>{line}</li>)}
+  </ul>
+</section>}
