@@ -42,17 +42,8 @@ so the build succeeds and `getEntry()` returns `undefined`.
 
 ## Tests
 
-Unit tests sit next to their sources:
-
-- `course-graph.test.ts` --- pure graph resolution (bare slugs, cross-collection
-  refs, dangling/self-ref detection, `courseMetaSchema`)
-- `course-content.test.ts` --- filesystem reader, end-to-end graph, and API
-  writer, exercised against an explicit collections config
-- `collections.test.ts` and `key-dates.test.ts` --- `toCourseCollections`, and
-  `keyDatesMarkdown`
-- `schemas.test.ts` --- schema shapes and the `people` factory, invoked through
-  a `vi.mock` shim for `astro:content` and `astro/loaders` so no Astro build is
-  needed
+Unit tests sit next to their sources. `schemas.test.ts` mocks `astro:content`
+and `astro/loaders` with `vi.mock`, so no Astro build is needed.
 
 Run `pnpm check` (format check, lint, typecheck, tests) --- the same command CI
 runs.
