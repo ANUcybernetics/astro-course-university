@@ -1,7 +1,7 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
-import type { CourseCollectionSpec, CourseCollectionsSpec } from "./collections.js";
+import type { CourseCollectionsSpec } from "./collections.js";
 import { courseNodeSchema } from "./node-schema.js";
 
 export type { CourseCollectionSpec, CourseCollectionsSpec } from "./collections.js";
@@ -121,7 +121,7 @@ export function defineCourseCollections<T extends CourseCollectionsSpec>(
 ): CourseCollectionsOf<T> {
   const { passthrough = true } = options;
   const collections: Record<string, unknown> = {};
-  for (const [key, entry] of Object.entries(spec) as [string, CourseCollectionSpec][]) {
+  for (const [key, entry] of Object.entries(spec)) {
     if (entry.collection === false) continue;
     const base = `src/${entry.dir ?? `content/${key}`}`;
     const pattern = entry.suffix ? `**/*${entry.suffix}` : undefined;
@@ -131,5 +131,6 @@ export function defineCourseCollections<T extends CourseCollectionsSpec>(
       schema: maybePassthrough(schema, passthrough),
     });
   }
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- keys are only known at runtime; a mapped type over generic T cannot be built from a Record
   return collections as CourseCollectionsOf<T>;
 }

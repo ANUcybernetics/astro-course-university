@@ -353,7 +353,8 @@ describe("courseMetaSchema", () => {
 
   test("courseGraph() fails fast on invalid course metadata", () => {
     expect(() =>
-      courseGraph({ collections: [{ key: "topics" }], course: { code: "X" } as never }),
+      // @ts-expect-error -- deliberately invalid course metadata
+      courseGraph({ collections: [{ key: "topics" }], course: { code: "X" } }),
     ).toThrow(/invalid course metadata/);
     expect(() => courseGraph({ collections: [{ key: "topics" }], course: valid })).not.toThrow();
   });

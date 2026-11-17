@@ -2,6 +2,10 @@ import { getCollection } from "astro:content";
 import type { CollectionEntry, CollectionKey } from "astro:content";
 import { resolveEdgeTarget } from "./course-graph.js";
 
+function hasFlag(data: unknown, key: "published" | "unlisted", value: boolean): boolean {
+  return typeof data === "object" && data !== null && Reflect.get(data, key) === value;
+}
+
 /**
  * Drop-in replacement for `getCollection` that returns the entries fit to
  * list: it drops `published: false` and `unlisted: true`. The course schemas
@@ -38,9 +42,8 @@ export async function getPublishedCollection<C extends CollectionKey>(
   filter?: (entry: CollectionEntry<C>) => boolean,
 ): Promise<CollectionEntry<C>[]> {
   return getCollection(collection, (entry: CollectionEntry<C>) => {
-    const data = entry.data as { published?: boolean; unlisted?: boolean };
-    if (import.meta.env.PROD && data.published === false) return false;
-    if (data.unlisted === true) return false;
+    if (import.meta.env.PROD && hasFlag(entry.data, "published", false)) return false;
+    if (hasFlag(entry.data, "unlisted", true)) return false;
     return filter ? filter(entry) : true;
   });
 }
@@ -59,7 +62,9 @@ export async function getPublishedCollection<C extends CollectionKey>(
  * ---
  * ```
  */
-export async function getCourseStaticPaths<C extends CollectionKey>(collection: C) {
+export async function getCourseStaticPaths<C extends CollectionKey>(
+  collection: C,
+): Promise<{ params: { slug: string }; props: { entry: CollectionEntry<C> } }[]> {
   const entries = await getPublishedCollection(collection);
   return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
@@ -76,6 +81,16 @@ export interface GraphEntry {
     unlisted?: boolean;
     description?: string | null;
   };
+}
+
+function isGraphEntry(e: unknown): e is GraphEntry {
+  if (typeof e !== "object" || e === null) return false;
+  if (!("collection" in e) || typeof e.collection !== "string") return false;
+  if (!("id" in e) || typeof e.id !== "string") return false;
+  if (!("data" in e) || typeof e.data !== "object" || e.data === null) return false;
+  if (!("title" in e.data) || typeof e.data.title !== "string") return false;
+  if (!("related" in e.data) || e.data.related === undefined) return true;
+  return Array.isArray(e.data.related) && e.data.related.every((r) => typeof r === "string");
 }
 
 function refsOf(entry: GraphEntry): string[] {
@@ -102,8 +117,14 @@ export async function getRelatedEntries(
   const selfId = `${entry.collection}/${entry.id}`;
   const pool = new Map<string, GraphEntry>();
   for (const collection of collections) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the generated key union cannot be enumerated at runtime; callers pass the same keys as courseGraph()
     for (const e of await getCollection(collection as CollectionKey)) {
-      const candidate = e as unknown as GraphEntry;
+      if (!isGraphEntry(e)) {
+        throw new Error(
+          `getRelatedEntries: entry in collection "${collection}" is not a graph entry (needs string collection and id, and data.title as a string)`,
+        );
+      }
+      const candidate = e;
       if (import.meta.env.PROD && candidate.data.published === false) continue;
       if (candidate.data.unlisted === true) continue;
       pool.set(`${collection}/${candidate.id}`, candidate);

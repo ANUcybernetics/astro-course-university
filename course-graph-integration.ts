@@ -120,7 +120,9 @@ export default function courseGraph(options: CourseGraphOptions): AstroIntegrati
         try {
           distPath = dir instanceof URL ? fileURLToPath(dir) : String(dir);
         } catch (e) {
-          logger.error(`Course graph generation failed: ${e}`);
+          logger.error(
+            `Course graph generation failed: ${e instanceof Error ? e.message : String(e)}`,
+          );
           return;
         }
 

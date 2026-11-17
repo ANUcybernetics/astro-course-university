@@ -63,11 +63,15 @@ function toStringArray(val: unknown): string[] {
   return [];
 }
 
+function isRecord(val: unknown): val is Record<string, unknown> {
+  return typeof val === "object" && val !== null;
+}
+
 function toExternalLinks(val: unknown): ExternalLink[] {
   if (!Array.isArray(val)) return [];
-  return val.flatMap((item) => {
-    if (item === null || typeof item !== "object") return [];
-    const { label, url } = item as Record<string, unknown>;
+  return val.flatMap((item: unknown) => {
+    if (!isRecord(item)) return [];
+    const { label, url } = item;
     return typeof label === "string" && typeof url === "string" ? [{ label, url }] : [];
   });
 }
@@ -111,10 +115,9 @@ export async function readCourseNodes(
       const fmMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
       if (!fmMatch) continue;
 
-      const raw = parseYaml(fmMatch[1]);
-      if (typeof raw !== "object" || raw === null) continue;
+      const fm: unknown = parseYaml(fmMatch[1]);
+      if (!isRecord(fm)) continue;
 
-      const fm = raw as Record<string, unknown>;
       // Out of the graph on either flag: `published: false` is not on the
       // site yet, `unlisted: true` is on it but linked from nowhere. A graph
       // node is a link from every related page and an /api/ entry, which is

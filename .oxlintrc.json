@@ -12,6 +12,9 @@
     "node": true,
     "es2024": true
   },
+  "options": {
+    "typeAware": true
+  },
   "jsPlugins": [
     "@e18e/eslint-plugin",
     "eslint-plugin-no-only-tests",

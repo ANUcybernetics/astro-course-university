@@ -14,15 +14,20 @@ vi.mock("astro/loaders", () => ({
 import { courseNodeSchema, definePeopleCollection } from "./schemas.js";
 
 type CollectionLike = { schema?: unknown };
+type SchemaContext = { image: () => z.ZodTypeAny };
+
+function isSchemaFactory(value: unknown): value is (ctx: SchemaContext) => unknown {
+  return typeof value === "function";
+}
 
 function resolveSchema(
   collection: CollectionLike,
-  ctx: { image: () => z.ZodTypeAny } = { image: () => z.any() },
+  ctx: SchemaContext = { image: () => z.any() },
 ): z.ZodType<Record<string, unknown>> {
   const s = collection.schema;
-  return typeof s === "function"
-    ? ((s as (c: typeof ctx) => z.ZodTypeAny)(ctx) as z.ZodType<Record<string, unknown>>)
-    : (s as z.ZodType<Record<string, unknown>>);
+  const resolved = isSchemaFactory(s) ? s(ctx) : s;
+  if (!(resolved instanceof z.ZodType)) throw new Error("collection schema is not a zod schema");
+  return resolved.pipe(z.record(z.string(), z.unknown()));
 }
 
 describe("courseNodeSchema", () => {
@@ -190,7 +195,7 @@ describe("definePeopleCollection", () => {
 
   test("passthrough preserves unknown fields", () => {
     const parsed = schema.parse({ title: "x", twitter: "@someone" });
-    expect((parsed as { twitter: unknown }).twitter).toBe("@someone");
+    expect(parsed.twitter).toBe("@someone");
   });
 });
 
@@ -198,10 +203,7 @@ describe("defineCourseCollections", () => {
   // Imported here rather than at the top so the vi.mock shims above apply.
   test("builds one Astro collection per key with the node schema", async () => {
     const { defineCourseCollections } = await import("./schemas.js");
-    const collections = defineCourseCollections({ topics: {}, labs: {} }) as unknown as Record<
-      string,
-      { loader: { base: string; pattern: string }; schema: z.ZodTypeAny }
-    >;
+    const collections = defineCourseCollections({ topics: {}, labs: {} });
     expect(Object.keys(collections)).toEqual(["topics", "labs"]);
     expect(collections.topics.loader).toEqual({
       base: "src/content/topics",
@@ -219,10 +221,7 @@ describe("defineCourseCollections", () => {
         notes: { dir: "notes", suffix: ".note.md" },
       },
       { passthrough: false },
-    ) as unknown as Record<
-      string,
-      { loader: { base: string; pattern: string }; schema: z.ZodTypeAny }
-    >;
+    );
     expect(collections.labs.schema.parse({ title: "Lab 1", week: 2 })).toMatchObject({ week: 2 });
     expect(() => collections.labs.schema.parse({ title: "Lab 1" })).toThrow();
     // passthrough: false strips unknown keys (zod's default) rather than rejecting them
